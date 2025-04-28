@@ -1,0 +1,32 @@
+[
+  {
+    "displayName": "Anime Girl (Default)",
+    "internalName": "anime_girl",
+    "positivePrompt": "masterpiece, best quality, anime style, beautiful detailed eyes, colorful hair, dynamic lighting, perfect anatomy, cute expression",
+    "negativePrompt": "lowres, bad anatomy, bad hands, text, error, blurry, cropped, worst quality, jpeg artifacts"
+  },
+  {
+    "displayName": "Fantasy Warrior",
+    "internalName": "fantasy_warrior",
+    "positivePrompt": "masterpiece, best quality, detailed armor, medieval fantasy, dynamic pose, dramatic lighting, powerful expression",
+    "negativePrompt": "bad anatomy, missing limbs, deformed, blurry, lowres, watermark, text, cropped"
+  },
+  {
+    "displayName": "Sci-Fi Landscape",
+    "internalName": "sci_fi_landscape",
+    "positivePrompt": "masterpiece, best quality, detailed environment, futuristic city, sci-fi atmosphere, colorful lights, vast scenery, cinematic view",
+    "negativePrompt": "lowres, bad perspective, blurry, cropped, watermark, error, distorted buildings"
+  },
+  {
+    "displayName": "Realistic Portrait",
+    "internalName": "realistic_portrait",
+    "positivePrompt": "photorealistic, masterpiece, best quality, cinematic lighting, detailed skin texture, beautiful eyes, natural colors",
+    "negativePrompt": "bad anatomy, lowres, blurry, unrealistic colors, watermark, text"
+  },
+  {
+    "displayName": "Dark Gothic Scene",
+    "internalName": "dark_gothic",
+    "positivePrompt": "gothic architecture, dark atmosphere, masterpiece, detailed background, mysterious setting, dramatic lighting",
+    "negativePrompt": "bad anatomy, lowres, blurry, overexposed, error, watermark, cropped"
+  }
+]

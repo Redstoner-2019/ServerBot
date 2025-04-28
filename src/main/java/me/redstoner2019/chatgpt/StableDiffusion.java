@@ -1,12 +1,9 @@
 package me.redstoner2019.chatgpt;
 
-import me.redstoner2019.Main;
-import me.redstoner2019.events.ChatEvent;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -21,6 +18,7 @@ public class StableDiffusion {
 
     public static HashMap<String, JSONObject> presetNameMappings = new HashMap<>();
     public static HashMap<String, JSONObject> presetNameDisplayMappings = new HashMap<>();
+    public static String staticIP = "redstonerdev.io";
 
     static {
         try {
@@ -116,11 +114,11 @@ public class StableDiffusion {
                         continue;
                     }
 
-                    wait.put("status", "Processing");
+                    wait.put("status", "switching_model");
                     wait.put("progress", 0f);
                     wait.put("sampling_step",0);
                     wait.put("sampling_steps",1);
-                    wait.put("eta_relative",-1f);
+                    wait.put("eta_relative",0f);
                     status.put(wait.getString("id"), wait);
 
                     String positivePromptPreset = wait.optString("positivePromptPreset","");
@@ -128,21 +126,11 @@ public class StableDiffusion {
                     String positivePrompt = presetNameDisplayMappings.getOrDefault(positivePromptPreset,new JSONObject()).optString("positivePrompt","");
                     String negativePrompt = presetNameDisplayMappings.getOrDefault(positivePromptPreset,new JSONObject()).optString("negativePrompt","");
 
-                    /*switch (positivePromptPreset) {
-                        case "default" -> {
-                            negativePrompt = "lowres, bad anatomy, bad hands, bad fingers, blurry, bad face, deformed, mutated, extra limbs, missing fingers, cloned face, poorly drawn hands, watermark, signature, text, worst quality, jpeg artifacts, ";
-                        }
-                        case "Anime Girl Preset" -> {
-                            positivePrompt = "1girl, solo, masterpiece, best quality, ultra-detailed, highly detailed eyes, beautiful detailed face, perfect anatomy, detailed hair, looking at viewer, dynamic pose, (soft lighting), intricate clothes, fantasy background, vibrant colors, cinematic lighting, ";
-                            negativePrompt = "lowres, bad anatomy, bad hands, bad fingers, blurry, bad face, deformed, mutated, extra limbs, missing fingers, cloned face, poorly drawn hands, watermark, signature, text, worst quality, jpeg artifacts, ";
-                        }
-                    }*/
-
                     try{
                         positivePrompt = positivePrompt + wait.getString("positivePrompt");
                         negativePrompt = negativePrompt + wait.getString("negativePrompt");
 
-                        URL url = new URL("http://127.0.0.1:7860/sdapi/v1/txt2img");
+                        URL url = new URL("http://" + staticIP + ":7860/sdapi/v1/txt2img");
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                         connection.setRequestMethod("POST");
                         connection.setRequestProperty("Content-Type", "application/json");
@@ -162,6 +150,11 @@ public class StableDiffusion {
                         requestJson.put("sd_model_checkpoint", wait.getString("model"));
                         requestJson.put("batch_size", 1);
 
+                        ensureModelLoaded(wait.getString("model"));
+
+                        wait.put("status", "Processing");
+                        status.put(wait.getString("id"), wait);
+
                         String jsonInputString = requestJson.toString();
 
                         try (OutputStream os = connection.getOutputStream()) {
@@ -174,13 +167,11 @@ public class StableDiffusion {
                             @Override
                             public void run() {
                                 float progress = 0;
+                                int errors = 0;
                                 while (true) {
-                                    final JSONObject waitFinal = finalWait;
-                                    progress+= (float) Math.random() * 5;
-                                    progress = Math.min(progress,100);
-
                                     try{
-                                        URL progressUrl = new URL("http://127.0.0.1:7860/sdapi/v1/progress");
+                                        final JSONObject waitFinal = finalWait;
+                                        URL progressUrl = new URL("http://" + staticIP + ":7860/sdapi/v1/progress");
                                         HttpURLConnection progressConnection = (HttpURLConnection) progressUrl.openConnection();
                                         progressConnection.setRequestMethod("GET");
 
@@ -195,15 +186,18 @@ public class StableDiffusion {
                                         waitFinal.put("sampling_step",pr.getJSONObject("state").getInt("sampling_step"));
                                         waitFinal.put("sampling_steps",pr.getJSONObject("state").getInt("sampling_steps"));
                                         waitFinal.put("eta_relative",(float) pr.getDouble("eta_relative"));
+
+                                        waitFinal.put("progress", progress);
+                                        status.put(waitFinal.getString("id"), waitFinal);
+
+                                        if(waitFinal.getInt("sampling_step") == waitFinal.getInt("sampling_steps")){
+                                            break;
+                                        }
+                                        errors = 0;
                                     }catch (Exception e){
                                         e.printStackTrace();
-                                    }
-
-                                    waitFinal.put("progress", progress);
-                                    status.put(waitFinal.getString("id"), waitFinal);
-
-                                    if(waitFinal.getInt("sampling_step") == waitFinal.getInt("sampling_steps")){
-                                        break;
+                                        errors++;
+                                        if(errors >= 5) break;
                                     }
                                     try {
                                         Thread.sleep(1000);
@@ -239,7 +233,6 @@ public class StableDiffusion {
                         }
                     } catch (Exception e){
                         wait.put("status", "Error");
-                        wait.put("message", ChatEvent.exceptionToString(e));
                         e.printStackTrace();
                         status.put(wait.getString("id"), wait);
 
@@ -266,7 +259,61 @@ public class StableDiffusion {
             steps = 16; // minimum safe steps
         }
 
-        return (int) (steps * 1.2);
+        return (int) (steps * 1.0);
     }
 
+    public static void ensureModelLoaded(String desiredModel) throws IOException, InterruptedException {
+        String currentModel = getCurrentModel();
+        System.out.println("Current model: " + currentModel);
+
+        if (!currentModel.equals(desiredModel)) {
+            System.out.println("Switching model to: " + desiredModel);
+            switchModel(desiredModel);
+
+            // Wait a little bit for the model to fully load (VERY IMPORTANT)
+            Thread.sleep(5000); // You can increase if needed (e.g., 10000ms = 10s for large models)
+
+            System.out.println("Model switched successfully!");
+        } else {
+            System.out.println("Model is already correct, no switch needed!");
+        }
+    }
+
+    private static String getCurrentModel() throws IOException {
+        URL url = new URL("http://" + staticIP + ":7860/sdapi/v1/options");
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        StringBuilder content = new StringBuilder();
+        String line;
+        while ((line = in.readLine()) != null) {
+            content.append(line);
+        }
+        in.close();
+
+        JSONObject json = new JSONObject(content.toString());
+        return json.getString("sd_model_checkpoint");
+    }
+
+    private static void switchModel(String modelName) throws IOException {
+        URL url = new URL("http://" + staticIP + ":7860/sdapi/v1/options");
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("POST");
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setDoOutput(true);
+
+        JSONObject json = new JSONObject();
+        json.put("sd_model_checkpoint", modelName);
+
+        try (OutputStream os = con.getOutputStream()) {
+            byte[] input = json.toString().getBytes("utf-8");
+            os.write(input, 0, input.length);
+        }
+
+        int responseCode = con.getResponseCode();
+        if (responseCode != 200) {
+            throw new IOException("Failed to switch model! HTTP " + responseCode);
+        }
+    }
 }

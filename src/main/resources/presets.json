@@ -6,6 +6,12 @@
     "negativePrompt": "lowres, bad anatomy, bad hands, text, error, blurry, cropped, worst quality, jpeg artifacts"
   },
   {
+    "displayName": "Anime Girl (Old)",
+    "internalName": "anime_girl_old",
+    "positivePrompt": "1girl, solo, masterpiece, best quality, ultra-detailed, highly detailed eyes, beautiful detailed face, perfect anatomy, detailed hair, looking at viewer, dynamic pose, intricate clothes, vibrant colors, cinematic lighting, smiling gently with a soft expression, detailed background",
+    "negativePrompt": "lowres, bad anatomy, bad hands, bad fingers, blurry, bad face, deformed, mutated, extra limbs, missing fingers, cloned face, poorly drawn hands, watermark, signature, text, worst quality, jpeg artifacts"
+  },
+  {
     "displayName": "Fantasy Warrior",
     "internalName": "fantasy_warrior",
     "positivePrompt": "masterpiece, best quality, detailed armor, medieval fantasy, dynamic pose, dramatic lighting, powerful expression",

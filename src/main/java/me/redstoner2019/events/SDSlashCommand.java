@@ -4,6 +4,7 @@ import me.redstoner2019.Main;
 import me.redstoner2019.chatgpt.StableDiffusion;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -30,15 +31,17 @@ public class SDSlashCommand extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        event.deferReply().queue();
         if(event.getName().equals("generateimage")){
+            event.deferReply().queue();
             String model = event.getOption("model").getAsString();
             String positivePrompt = event.getOption("positiveprompt").getAsString();
             String negativePrompt = event.getOption("negativeprompt") != null ? event.getOption("negativeprompt").getAsString() : "";
             String basePromptPreset = event.getOption("basepromtpreset") != null ? event.getOption("basepromtpreset").getAsString() : "";
             String sizeString = event.getOption("size") != null ? event.getOption("size").getAsString() : "MEDIUM";
 
-            startGeneration(event.getHook(), model,positivePrompt,negativePrompt,basePromptPreset,sizeString);
+            event.getHook().sendMessage("Waiting...").queue(message -> {
+                startGeneration(message, model,positivePrompt,negativePrompt,basePromptPreset,sizeString);
+            });
         }
     }
 
@@ -48,6 +51,10 @@ public class SDSlashCommand extends ListenerAdapter {
         String action = parts[0];
         String id = parts[1];
         if (action.equals("regenerate")) {
+            if(!settingsMap.containsKey(id)) {
+                event.reply("This is not valid anymore.").queue();
+                return;
+            }
             parts = settingsMap.get(id).split(":");
             String model = new String(Base64.decodeBase64(parts[0]));
             String positivePrompt = new String(Base64.decodeBase64(parts[1]));
@@ -55,7 +62,10 @@ public class SDSlashCommand extends ListenerAdapter {
             String basePrompt = new String(Base64.decodeBase64(parts[3]));
             String sizeString = new String(Base64.decodeBase64(parts[4]));
             event.deferReply().queue();
-            startGeneration(event.getHook(), model,positivePrompt,negativePrompt,basePrompt,sizeString);
+
+            event.getHook().sendMessage("Waiting...").queue(message -> {
+                startGeneration(message, model,positivePrompt,negativePrompt,basePrompt,sizeString);
+            });
         }
     }
 
@@ -84,7 +94,7 @@ public class SDSlashCommand extends ListenerAdapter {
             ).queue();
         }
         if (event.getName().equals("generateimage") && event.getFocusedOption().getName().equals("size")) {
-            List<String> suggestions = new ArrayList<>(List.of("LARGE","MEDIUM","SMALL","MASSIVE"));
+            List<String> suggestions = new ArrayList<>(List.of("LARGE","HIGH","MEDIUM","SMALL","MASSIVE"));
 
             List<String> filteredSuggestions = suggestions.stream()
                     .filter(s -> s.toLowerCase().startsWith(event.getFocusedOption().getValue().toLowerCase()))
@@ -98,7 +108,7 @@ public class SDSlashCommand extends ListenerAdapter {
         }
     }
 
-    public static void startGeneration(InteractionHook hook, String model, String positivePrompt, String negativePrompt, String basePromptPreset, String sizeString){
+    public static void startGeneration(Message hook, String model, String positivePrompt, String negativePrompt, String basePromptPreset, String sizeString){
         String modelName;
 
         switch (model) {
@@ -107,9 +117,10 @@ public class SDSlashCommand extends ListenerAdapter {
             }
             case "Stable Diffusion XL" -> {
                 modelName = "sd_xl_base_1.0.safetensors";
+                modelName = "v1-5-pruned-emaonly.safetensors";
             }
             case "AnythingXL" -> {
-                modelName = "AnythingXL_xl.safetensors";
+                modelName = "anythingXL.safetensors";
             }
             default -> {
                 model = "Stable Diffusion";
@@ -122,6 +133,9 @@ public class SDSlashCommand extends ListenerAdapter {
         switch (sizeString) {
             case "SMALL" -> {
                 size = 384;
+            }
+            case "HIGH" -> {
+                size = 784;
             }
             case "LARGE" -> {
                 size = 1024;
@@ -136,94 +150,116 @@ public class SDSlashCommand extends ListenerAdapter {
         int finalSize = size;
         boolean running = true;
         while (running) {
-            JSONObject status = StableDiffusion.getStatus(id);
-            switch (status.getString("status")) {
-                case "In Queue" -> {
-                    EmbedBuilder embedBuilder = new EmbedBuilder()
-                            .setTitle("Waiting in Queue...")
-                            .addField("Your Spot:",status.getInt("queueSpot") + "",false)
-                            .addField("","",false)
-                            .addField("Model:", "`" + model + "`", false)
-                            .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
-                            .addField("Positive Prompt:", "`" + positivePrompt + "`", false)
-                            .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
-                            .addField("Image Size:", "`" + finalSize + " x " + finalSize + "`", false)
-                            .setColor(Color.ORANGE);
+            try{
+                JSONObject status = StableDiffusion.getStatus(id);
+                switch (status.getString("status")) {
+                    case "In Queue" -> {
+                        EmbedBuilder embedBuilder = new EmbedBuilder()
+                                .setTitle("Waiting in Queue...")
+                                .addField("Your Spot:",status.getInt("queueSpot") + "",false)
+                                .addField("","",false)
+                                .addField("Model:", "`" + model + "`", false)
+                                .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
+                                .addField("Positive Prompt:", "`" + positivePrompt + "`", false)
+                                .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
+                                .addField("Image Size:", "`" + finalSize + " x " + finalSize + "`", false)
+                                .setColor(Color.ORANGE);
 
-                    hook.editOriginalEmbeds(embedBuilder.build()).queue();
-                }
-                case "Processing" -> {
-                    EmbedBuilder embedBuilder = new EmbedBuilder()
-                            .setTitle("Processing...")
-                            .addField("Progress:",getProgressBar(status.getFloat("progress")),false)
-                            .addField("Sampling:","[ " + status.getInt("sampling_step") + " / " + status.getInt("sampling_steps") + " ]",false)
-                            .addField("Estimated time left:",formatEta(status.getFloat("eta_relative")),false)
-                            .addField("","",false)
-                            .addField("Model:", "`" + model + "`", false)
-                            .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
-                            .addField("Positive Prompt:", "`" + positivePrompt + "`", false)
-                            .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
-                            .addField("Image Size:", "`" + finalSize + " x " + finalSize + "`", false)
-                            .setColor(Color.YELLOW);
-
-                    hook.editOriginalEmbeds(embedBuilder.build()).queue();
-                }
-                case "Done" -> {
-                    running = false;
-
-                    String settingsString = Base64.encodeBase64String(model.getBytes()) + ":"
-                            + Base64.encodeBase64String(positivePrompt.getBytes()) + ":"
-                            + Base64.encodeBase64String(negativePrompt.getBytes()) + ":"
-                            + Base64.encodeBase64String(basePromptPreset.getBytes()) + ":"
-                            + Base64.encodeBase64String(sizeString.getBytes());
-                    String newUUID = UUID.randomUUID().toString();
-
-                    settingsMap.put(newUUID,settingsString);
-
-                    Button regenerate = Button.primary("regenerate:" + newUUID, "Generate again");
-
-                    EmbedBuilder embedBuilder = new EmbedBuilder()
-                            .setTitle("Uploading...")
-                            .addField("Model:           ", "`" + model + "`", false)
-                            .addField("Preset:          ", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
-                            .addField("Positive Prompt: ", "`" + positivePrompt + "`", false)
-                            .addField("Negative Prompt: ", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
-                            .addField("Image Size:      ", "`" + finalSize + " x " + finalSize + "`", false)
-                            .addField("Uploading Image...","",false)
-                            .setColor(Color.GREEN);
-
-                    hook.editOriginalEmbeds(embedBuilder.build())
-                            .setActionRow(regenerate)
-                            .queue();
-
-                    BufferedImage image = StableDiffusion.getResult(id);
-                    BufferedImage thumbnail = createThumbnail(image,192,192);
-
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    try {
-                        ImageIO.write(image, "png", os);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        hook.editMessageEmbeds(embedBuilder.build()).queue();
+                        hook.editMessage("").queue();
                     }
-                    byte[] imageData = os.toByteArray();
+                    case "Processing" -> {
+                        EmbedBuilder embedBuilder = new EmbedBuilder()
+                                .setTitle("Processing...")
+                                .addField("Progress:",getProgressBar(status.getFloat("progress")),false)
+                                .addField("Sampling:","[ " + status.getInt("sampling_step") + " / " + status.getInt("sampling_steps") + " ]",false)
+                                .addField("Estimated time left:",formatEta(status.getFloat("eta_relative")),false)
+                                .addField("","",false)
+                                .addField("Model:", "`" + model + "`", false)
+                                .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
+                                .addField("Positive Prompt:", "`" + positivePrompt + "`", false)
+                                .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
+                                .addField("Image Size:", "`" + finalSize + " x " + finalSize + "`", false)
+                                .addField("Last Update:","<t:" + (System.currentTimeMillis() / 1000) + ":R>",false)
+                                //.addField("Detail:","```json\n" + status.optJSONObject("detail",new JSONObject()).toString(3) + "```",false)
+                                .setColor(Color.YELLOW);
 
-                    os = new ByteArrayOutputStream();
-                    try {
-                        ImageIO.write(thumbnail, "png", os);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        //hook.editMessage("```json\n" + status.optJSONObject("detail",new JSONObject()).optString("sd_model_checkpoint","") + "```").queue();
+
+                        hook.editMessageEmbeds(embedBuilder.build()).queue();
                     }
-                    byte[] thumbnailData = os.toByteArray();
+                    case "switching_model" -> {
+                        EmbedBuilder embedBuilder = new EmbedBuilder()
+                                .setTitle("Switching Model... This might take a moment.")
+                                .addField("Model:", "`" + model + "`", false)
+                                .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
+                                .addField("Positive Prompt:", "`" + positivePrompt + "`", false)
+                                .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
+                                .addField("Image Size:", "`" + finalSize + " x " + finalSize + "`", false)
+                                .addField("Last Update:","<t:" + (System.currentTimeMillis() / 1000) + ":R>",false)
+                                //.addField("Detail:","```json\n" + status.optJSONObject("detail",new JSONObject()).toString(3) + "```",false)
+                                .setColor(Color.YELLOW);
+                       // hook.editMessage("```json\n" + status.optJSONObject("detail",new JSONObject()).optString("sd_model_checkpoint","") + "```").queue();
 
-                    String userPrompt = "You are an AI moderation assistant.\n" +
-                            "\n" +
-                            "You MUST answer with ONLY \"YES\" or \"NO\" and NOTHING ELSE.\n" +
-                            "\n" +
-                            "If the following text contains nudity, sexual themes, erotic descriptions, or explicit adult content, answer \"YES\".\n" +
-                            "\n" +
-                            "If the text does not, answer \"NO\".\n" +
-                            "\n" +
-                            "Here is the text:\n" + positivePrompt;
+                        hook.editMessageEmbeds(embedBuilder.build()).queue();
+                        hook.editMessage("").queue();
+                    }
+                    case "Done" -> {
+                        running = false;
+
+                        String settingsString = Base64.encodeBase64String(model.getBytes()) + ":"
+                                + Base64.encodeBase64String(positivePrompt.getBytes()) + ":"
+                                + Base64.encodeBase64String(negativePrompt.getBytes()) + ":"
+                                + Base64.encodeBase64String(basePromptPreset.getBytes()) + ":"
+                                + Base64.encodeBase64String(sizeString.getBytes());
+                        String newUUID = UUID.randomUUID().toString();
+
+                        settingsMap.put(newUUID,settingsString);
+
+                        Button regenerate = Button.primary("regenerate:" + newUUID, "Generate again");
+
+                        EmbedBuilder embedBuilder = new EmbedBuilder()
+                                .setTitle("Uploading...")
+                                .addField("Model:           ", "`" + model + "`", false)
+                                .addField("Preset:          ", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
+                                .addField("Positive Prompt: ", "`" + positivePrompt + "`", false)
+                                .addField("Negative Prompt: ", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
+                                .addField("Image Size:      ", "`" + finalSize + " x " + finalSize + "`", false)
+                                .addField("Uploading Image...","",false)
+                                .setColor(Color.GREEN);
+
+                        hook.editMessageEmbeds(embedBuilder.build())
+                                .setActionRow(regenerate)
+                                .queue();
+
+                        BufferedImage image = StableDiffusion.getResult(id);
+                        BufferedImage thumbnail = createThumbnail(image,192,192);
+
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        try {
+                            ImageIO.write(image, "png", os);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        byte[] imageData = os.toByteArray();
+
+                        os = new ByteArrayOutputStream();
+                        try {
+                            ImageIO.write(thumbnail, "png", os);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        byte[] thumbnailData = os.toByteArray();
+
+                        String userPrompt = "You are an AI moderation assistant.\n" +
+                                "\n" +
+                                "You MUST answer with ONLY \"YES\" or \"NO\" and NOTHING ELSE.\n" +
+                                "\n" +
+                                "If the following text contains nudity, sexual themes, erotic descriptions, or explicit adult content, answer \"YES\".\n" +
+                                "\n" +
+                                "If the text does not, answer \"NO\".\n" +
+                                "\n" +
+                                "Here is the text:\n" + positivePrompt;
 
                     /*String result = "Error";
                     try {
@@ -232,49 +268,49 @@ public class SDSlashCommand extends ListenerAdapter {
                         e.printStackTrace();
                     }*/
 
-                    embedBuilder = new EmbedBuilder()
-                            .setTitle("Done!")
-                            .addField("Model:           ", "`" + model + "`", false)
-                            .addField("Preset:          ", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
-                            .addField("Positive Prompt: ", "`" + positivePrompt + "`", false)
-                            .addField("Negative Prompt: ", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
-                            .addField("Image Size:      ", "`" + image.getWidth() + " x " + image.getHeight() + "`", false)
-                            //.addField("NSFW",result,false)
-                            .setColor(Color.GREEN)
-                            .setThumbnail("attachment://thumbnail.png")
-                            .setImage("attachment://image.png");
+                        embedBuilder = new EmbedBuilder()
+                                .setTitle("Done!")
+                                .addField("Model:           ", "`" + model + "`", false)
+                                .addField("Preset:          ", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
+                                .addField("Positive Prompt: ", "`" + positivePrompt + "`", false)
+                                .addField("Negative Prompt: ", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
+                                .addField("Image Size:      ", "`" + image.getWidth() + " x " + image.getHeight() + "`", false)
+                                //.addField("NSFW",result,false)
+                                .setColor(Color.GREEN)
+                                .setThumbnail("attachment://thumbnail.png")
+                                .setImage("attachment://image.png");
 
-                    hook.editOriginalEmbeds(embedBuilder.build())
-                            .setFiles(FileUpload.fromData(thumbnailData,"thumbnail.png"))
-                            .setFiles(FileUpload.fromData(imageData,"image.png"))
-                            .setActionRow(regenerate)
-                            .queue();
+                        hook.editMessageEmbeds(embedBuilder.build())
+                                .setFiles(FileUpload.fromData(thumbnailData,"thumbnail.png"))
+                                .setFiles(FileUpload.fromData(imageData,"image.png"))
+                                .setActionRow(regenerate)
+                                .queue();
 
-                    hook.editOriginal("").queue();
+                        hook.editMessage("").queue();
+                    }
+                    case "Error" -> {
+                        EmbedBuilder embedBuilder = new EmbedBuilder()
+                                .setTitle("An Error occured.")
+                                .addField("Model:", "`" + model + "`", false)
+                                .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
+                                .addField("Positive Prompt:", "`" + positivePrompt + "`", false)
+                                .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
+                                .addField("Image Size:", "`" + finalSize + " x " + finalSize + "`", false)
+                                .addField("","",false)
+                                .addField("Error:", status.toString(3), false)
+                                .setColor(Color.RED);
+
+                        hook.editMessageEmbeds(embedBuilder.build()).queue();
+                        hook.editMessage("An error occured. \n" + status.toString(3)).queue();
+                        running = false;
+                    }
                 }
-                case "Error" -> {
-                    EmbedBuilder embedBuilder = new EmbedBuilder()
-                            .setTitle("An Error occured.")
-                            .addField("Model:", "`" + model + "`", false)
-                            .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
-                            .addField("Positive Prompt:", "`" + positivePrompt + "`", false)
-                            .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
-                            .addField("Image Size:", "`" + finalSize + " x " + finalSize + "`", false)
-                            .addField("","",false)
-                            .addField("Error:", status.toString(3), false)
-                            .setColor(Color.RED);
 
-                    hook.editOriginalEmbeds(embedBuilder.build()).queue();
-                    hook.editOriginal("An error occured. \n" + status.toString(3)).queue();
-                    running = false;
-                }
-            }
-
-            try {
-                Thread.sleep(750);
-            } catch (InterruptedException e) {
+                Thread.sleep(1000);
+            }catch (Exception e){
                 e.printStackTrace();
             }
+
         }
     }
 

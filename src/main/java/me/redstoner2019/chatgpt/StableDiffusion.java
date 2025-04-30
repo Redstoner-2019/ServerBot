@@ -1,5 +1,6 @@
 package me.redstoner2019.chatgpt;
 
+import me.redstoner2019.events.ChatEvent;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -18,21 +19,12 @@ public class StableDiffusion {
 
     public static HashMap<String, JSONObject> presetNameMappings = new HashMap<>();
     public static HashMap<String, JSONObject> presetNameDisplayMappings = new HashMap<>();
-    public static String staticIP = "redstonerdev.io";
+    public static HashMap<String, String> modelMappings = new HashMap<>();
+    public static String staticIP = "127.0.0.1";
 
     static {
-        try {
-            String json = new String(StableDiffusion.class.getClassLoader().getResourceAsStream("presets.json").readAllBytes());
-            JSONArray jsonArray = new JSONArray(json);
-
-            for (int i = 0; i < jsonArray.length(); i++) {
-                JSONObject preset = jsonArray.getJSONObject(i);
-                presetNameMappings.put(preset.getString("internalName"), preset);
-                presetNameDisplayMappings.put(preset.getString("displayName"), preset);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        reload();
+        //staticIP = "redstonerdev.io";
     }
 
     /**
@@ -43,7 +35,7 @@ public class StableDiffusion {
      * python launch.py --api
      */
 
-    public static String schedule(String model, String positivePrompt, String negativePrompt, String preset, int size){
+    public static String schedule(String model, String positivePrompt, String negativePrompt, String preset, int width, int height, int seed){
         String id = UUID.randomUUID().toString();
         JSONObject obj = new JSONObject();
         obj.put("id", id);
@@ -52,7 +44,9 @@ public class StableDiffusion {
         obj.put("negativePrompt", negativePrompt);
         obj.put("positivePromptPreset", preset);
         obj.put("status", "In Queue");
-        obj.put("size", size);
+        obj.put("width", width);
+        obj.put("height", height);
+        obj.put("seed", seed);
 
         int spot = 0;
 
@@ -127,8 +121,8 @@ public class StableDiffusion {
                     String negativePrompt = presetNameDisplayMappings.getOrDefault(positivePromptPreset,new JSONObject()).optString("negativePrompt","");
 
                     try{
-                        positivePrompt = positivePrompt + wait.getString("positivePrompt");
-                        negativePrompt = negativePrompt + wait.getString("negativePrompt");
+                        positivePrompt = positivePrompt + ", " + wait.getString("positivePrompt");
+                        negativePrompt = negativePrompt + ", " + wait.getString("negativePrompt");
 
                         URL url = new URL("http://" + staticIP + ":7860/sdapi/v1/txt2img");
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -136,19 +130,23 @@ public class StableDiffusion {
                         connection.setRequestProperty("Content-Type", "application/json");
                         connection.setDoOutput(true);
 
-                        int size = wait.getInt("size");
-                        int steps = calculateSteps(size,size);
+                        int width = wait.getInt("width");
+                        int height = wait.getInt("height");
+                        int steps = calculateSteps(width,height);
+                        steps = 30;
 
                         JSONObject requestJson = new JSONObject();
                         requestJson.put("prompt", positivePrompt);
                         requestJson.put("negative_prompt", negativePrompt);
                         requestJson.put("steps", steps);
                         requestJson.put("sampler_name", "DPM++ 2M");
+                        requestJson.put("sampler_name", "Euler a");
                         requestJson.put("cfg_scale", 7.5);
-                        requestJson.put("width", size);
-                        requestJson.put("height", size);
+                        requestJson.put("width", width);
+                        requestJson.put("height", height);
                         requestJson.put("sd_model_checkpoint", wait.getString("model"));
                         requestJson.put("batch_size", 1);
+                        requestJson.put("seed", wait.getInt("seed"));
 
                         ensureModelLoaded(wait.getString("model"));
 
@@ -169,6 +167,11 @@ public class StableDiffusion {
                                 float progress = 0;
                                 int errors = 0;
                                 while (true) {
+                                    try {
+                                        Thread.sleep(1000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
                                     try{
                                         final JSONObject waitFinal = finalWait;
                                         URL progressUrl = new URL("http://" + staticIP + ":7860/sdapi/v1/progress");
@@ -199,11 +202,6 @@ public class StableDiffusion {
                                         errors++;
                                         if(errors >= 5) break;
                                     }
-                                    try {
-                                        Thread.sleep(1000);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
                                 }
                             }
                         });
@@ -233,8 +231,10 @@ public class StableDiffusion {
                         }
                     } catch (Exception e){
                         wait.put("status", "Error");
-                        e.printStackTrace();
+                        wait.put("error", ChatEvent.exceptionToString(e));
                         status.put(wait.getString("id"), wait);
+
+                        e.printStackTrace();
 
                         for(String s : status.keySet()){
                             wait = status.get(s);
@@ -246,6 +246,29 @@ public class StableDiffusion {
             }
         });
         t.start();
+    }
+
+    public static void reload(){
+        try {
+            String json = new String(StableDiffusion.class.getClassLoader().getResourceAsStream("presets.json").readAllBytes());
+            JSONArray jsonArray = new JSONArray(json);
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject preset = jsonArray.getJSONObject(i);
+                presetNameMappings.put(preset.getString("internalName"), preset);
+                presetNameDisplayMappings.put(preset.getString("displayName"), preset);
+            }
+
+            json = new String(StableDiffusion.class.getClassLoader().getResourceAsStream("models.json").readAllBytes());
+            jsonArray = new JSONArray(json);
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject model = jsonArray.getJSONObject(i);
+                modelMappings.put(model.getString("display"),model.getString("file"));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static int calculateSteps(int width, int height) {

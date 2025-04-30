@@ -34,5 +34,11 @@
     "internalName": "dark_gothic",
     "positivePrompt": "gothic architecture, dark atmosphere, masterpiece, detailed background, mysterious setting, dramatic lighting",
     "negativePrompt": "bad anatomy, lowres, blurry, overexposed, error, watermark, cropped"
+  },
+  {
+    "displayName": "Nude Anime",
+    "internalName": "nude_anime",
+    "positivePrompt": "1girl, solo, masterpiece, best quality, ultra-detailed, highly detailed eyes, beautiful detailed face, perfect anatomy, detailed hair, looking at viewer, dynamic pose, intricate clothes, fantasy background, vibrant colors, cinematic lighting, long slightly wavy hair, detailed background, naked, nipples",
+    "negativePrompt": "lowres, bad anatomy, bad hands, bad fingers, blurry, bad face, deformed, mutated, extra limbs, missing fingers, cloned face, poorly drawn hands, watermark, signature, text, worst quality, jpeg artifacts"
   }
 ]

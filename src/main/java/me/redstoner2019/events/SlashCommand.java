@@ -1,9 +1,11 @@
 package me.redstoner2019.events;
 
 import me.redstoner2019.Main;
+import me.redstoner2019.chatgpt.Ollama;
 import me.redstoner2019.tts.TTSPlayer;
 import me.redstoner2019.ttsaws.TwitchTTS;
 import me.redstoner2019.utils.CompressionUtility;
+import me.redstoner2019.utils.LongMessageSender;
 import me.redstoner2019.utils.SHA256Hash;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
@@ -41,6 +43,25 @@ public class SlashCommand extends ListenerAdapter {
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         String user = event.getUser().getName();
         Guild guild = event.getGuild();
+
+        if(event.getName().equals("chat")){
+            event.deferReply().queue(message -> {
+                try {
+                    String prompt = event.getOption("message").getAsString();
+                    String response = Ollama.askModel("tinyllama:1.1b",prompt);
+                    response = "Prompt: `" + prompt + "`\n\n" + response;
+
+                    if(response.length() < 2000){
+                        message.editOriginal(response).queue();
+                    } else {
+                        message.editOriginal(response.substring(0,2000)).queue();
+                        LongMessageSender.sendLongMessage((TextChannel) event.getChannel(),response.substring(2000));
+                    }
+                } catch (Exception e) {
+                    message.editOriginal(ChatEvent.exceptionToString(e)).queue();
+                }
+            });
+        }
 
         if(event.getName().equals("vc")){
             if(event.getOption("speed") != null) {

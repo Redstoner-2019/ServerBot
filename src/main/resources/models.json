@@ -1,0 +1,26 @@
+[
+  {
+    "display": "AnythingXL",
+    "file": "AnythingXL_xl.safetensors"
+  },
+  {
+    "display": "Stable Diffusion 1.5",
+    "file": "v1-5-pruned-emaonly.safetensors"
+  },
+  {
+    "display": "Stable Diffusion XL",
+    "file": "sd_xl_base_1.0.safetensors"
+  },
+  {
+    "display": "Counterfeit V3",
+    "file": "counterfeitV30_v30.safetensors"
+  },
+  {
+    "display": "AbyssOrangeMix2 - Hardcore",
+    "file": "abyssorangemix2.safetensors"
+  },
+  {
+    "display": "Orangemixs",
+    "file": "AOM3_orangemixs.safetensors"
+  }
+]

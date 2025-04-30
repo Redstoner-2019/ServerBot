@@ -101,7 +101,7 @@ public class TTSPlayer {
             List<String> command = Arrays.asList(
                     "yt-dlp",
                     "-x",                         // extract audio
-                    "--cookies", "cookies.txt",
+                    "--cookies", "./cookies.txt",
                     "--audio-format", "mp3",
                     "--audio-quality", "0",       // best quality
                     "-o","youtube/" + uuid + ".mp3",

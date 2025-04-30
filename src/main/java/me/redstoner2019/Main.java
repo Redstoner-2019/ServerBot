@@ -22,6 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import software.amazon.awssdk.services.polly.model.VoiceId;
 
+import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -47,6 +48,7 @@ public class Main {
     public static HashMap<String, Boolean> prefixReading = new HashMap<>();
     public static HashMap<VoiceChannel, LocalDateTime> lastReadTimestamp = new HashMap<>();
     public static boolean TEST = true;
+    public static boolean GPU_DETECTED = false;
     /**
      * Nudes Stuff
      */
@@ -54,7 +56,7 @@ public class Main {
 
     public static void main(String[] args) {
         String TOKEN = new String(Base64.decodeBase64("TVRNME5EQTJOVGt3TnpVeE5qZzVPVFEwTWcuR2NqTmJSLlFSUDAwdHBHbElxaF80QVVycmVEc3FvenltanpWLUYweXNUamNz"));
-        if(TEST) TOKEN = new String(Base64.decodeBase64("TVRNMk5UYzNNRFl3TkRZNU9Ea3lOekl5TlEuRzBMZXlOLnljVy1MY2swRnpsbE5xN19fQ1ptbTBjSENGTGVrUlp3SEIwbjRB"));
+        if(TEST) TOKEN = new String(Base64.decodeBase64("TVRNMk5UYzNNRFl3TkRZNU9Ea3lOekl5TlEuR2d1NWkyLmJnU0Vrb1VaNlgxLUROQTY0LTg1Q0tITnVoSWswcXMzVklMOUVN"));
         jda = JDABuilder
                 .createDefault(TOKEN).enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .build();
@@ -72,6 +74,8 @@ public class Main {
         statusses.add("Cracking the reality");
         statusses.add("Cracking the cracking crack out of meth");
         statusses.add("Cracktastic!✨");
+
+        GPU_DETECTED = !GraphicsEnvironment.isHeadless();
 
         /*sfx.put("uwu","uwu.mp3");
         sfx.put("happi","happy-happy-happy-song.mp3");
@@ -138,35 +142,41 @@ public class Main {
                 }
 
                 for(Guild g : jda.getGuilds()){
-                    //g.updateCommands().queue();
-                    //g.updateCommands().addCommands(
-                    //        Commands.slash("vc","The vc command!")
-                    //                .addOption(OptionType.INTEGER, "speed", "Speed of the tts!", false)
-                    //                .addOption(OptionType.INTEGER, "pitch", "Pitch of the tts!", false)
-                    //                .addOption(OptionType.STRING, "alias", "Alias when reading your message!", false)
-                    //                .addOption(OptionType.STRING, "voice", "Set your voice!", false,true)
-                    //                .addOption(OptionType.STRING, "say", "Say something in VC!", false),
-                    //        Commands.slash("youtube","Play audio of a youtube video!")
-                    //                .addOption(OptionType.STRING, "url", "The URL!", true),
-                    //        Commands.slash("zitat","Sucht ein random zitat!"),
-                    //        Commands.slash("sfx","Spiel einen SFX ab!")
-                    //                .addOption(OptionType.STRING, "sound", "Der sound!", true,true),
-                    //        Commands.slash("uploadsfx","Upload an SFX!")
-                    //                .addOption(OptionType.STRING, "sfxname", "sfxname", true)
-                    //                .addOption(OptionType.ATTACHMENT, "file", "Sound File", true),
-                    //        Commands.slash("voices","Liste alle Stimmen auf!"),
-                    //        Commands.slash("togglevcreading","Toggles automatic reading in voice channels"),
-                    //        Commands.slash("toggleprefixreading","Toggles reading of the prefix in voice channels"),
-                    //        Commands.slash("uploadnude","Upload a nude (You are naughty)")
-                    //                .addOption(OptionType.ATTACHMENT, "file", "The nude", true),
-                    //        Commands.slash("nude","Show a random nude (You are naughty)"),
-                    //        Commands.slash("generateimage","AI Generate an Image!")
-                    //                .addOption(OptionType.STRING,"model","The generation Model", true, true)
-                    //                .addOption(OptionType.STRING,"positiveprompt","Positive Prompt (This is what you want the AI to do)", true)
-                    //                .addOption(OptionType.STRING,"negativeprompt","Negative Prompt (This is what you DONT want the AI to do)", false)
-                    //                .addOption(OptionType.STRING,"basepromtpreset","Base Promt Preset, allows you to not have to type in all the default prompts", false, true)
-                    //                .addOption(OptionType.STRING,"size","Image Size (LARGE = 1024x1024, MEDIUM = 512x512, SMALL = 256x256)", false, true)
-                    //).queue();
+                    if(true) break;
+                    g.updateCommands().queue();
+                    g.updateCommands().addCommands(
+                            Commands.slash("vc","The vc command!")
+                                    .addOption(OptionType.INTEGER, "speed", "Speed of the tts!", false)
+                                    .addOption(OptionType.INTEGER, "pitch", "Pitch of the tts!", false)
+                                    .addOption(OptionType.STRING, "alias", "Alias when reading your message!", false)
+                                    .addOption(OptionType.STRING, "voice", "Set your voice!", false,true)
+                                    .addOption(OptionType.STRING, "say", "Say something in VC!", false),
+                            Commands.slash("youtube","Play audio of a youtube video!")
+                                    .addOption(OptionType.STRING, "url", "The URL!", true),
+                            Commands.slash("zitat","Sucht ein random zitat!"),
+                            Commands.slash("sfx","Spiel einen SFX ab!")
+                                    .addOption(OptionType.STRING, "sound", "Der sound!", true,true),
+                            Commands.slash("uploadsfx","Upload an SFX!")
+                                    .addOption(OptionType.STRING, "sfxname", "sfxname", true)
+                                    .addOption(OptionType.ATTACHMENT, "file", "Sound File", true),
+                            Commands.slash("voices","Liste alle Stimmen auf!"),
+                            Commands.slash("togglevcreading","Toggles automatic reading in voice channels"),
+                            Commands.slash("toggleprefixreading","Toggles reading of the prefix in voice channels"),
+                            Commands.slash("uploadnude","Upload a nude (You are naughty)")
+                                    .addOption(OptionType.ATTACHMENT, "file", "The nude", true),
+                            Commands.slash("nude","Show a random nude (You are naughty)"),
+                            Commands.slash("chat","Ask the AI model something!")
+                                    .addOption(OptionType.STRING,"message","Your Prompt",true),
+                            Commands.slash("generateimage","AI Generate an Image!")
+                                    .addOption(OptionType.STRING,"model","The generation Model", true, true)
+                                    .addOption(OptionType.STRING,"positiveprompt","Positive Prompt (This is what you want the AI to do)", true)
+                                    .addOption(OptionType.STRING,"negativeprompt","Negative Prompt (This is what you DONT want the AI to do)", false)
+                                    .addOption(OptionType.STRING,"basepromtpreset","Base Promt Preset, allows you to not have to type in all the default prompts", false, true)
+                                    .addOption(OptionType.STRING,"size","Image Size (LARGE = 1024x1024, MEDIUM = 512x512, SMALL = 256x256)", false, true)
+                                    .addOption(OptionType.INTEGER,"width","Width (128 < 2048)", false)
+                                    .addOption(OptionType.INTEGER,"height","Height (128 < 2048)", false)
+                                    .addOption(OptionType.STRING,"seed","Seed", false)
+                    ).queue();
                 }
 
                 indexAllMessages();

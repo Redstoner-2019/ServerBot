@@ -1,5 +1,6 @@
 package me.redstoner2019;
 
+import com.neovisionaries.ws.client.WebSocketFactory;
 import me.redstoner2019.chatgpt.StableDiffusion;
 import me.redstoner2019.events.ChatEvent;
 import me.redstoner2019.events.JoinEvent;
@@ -17,21 +18,29 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.managers.AudioManager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import okhttp3.OkHttpClient;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import software.amazon.awssdk.services.polly.model.VoiceId;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
     public static JDA jda;
@@ -57,8 +66,14 @@ public class Main {
     public static void main(String[] args) {
         String TOKEN = new String(Base64.decodeBase64("TVRNME5EQTJOVGt3TnpVeE5qZzVPVFEwTWcuR2NqTmJSLlFSUDAwdHBHbElxaF80QVVycmVEc3FvenltanpWLUYweXNUamNz"));
         if(TEST) TOKEN = new String(Base64.decodeBase64("TVRNMk5UYzNNRFl3TkRZNU9Ea3lOekl5TlEuR2d1NWkyLmJnU0Vrb1VaNlgxLUROQTY0LTg1Q0tITnVoSWswcXMzVklMOUVN"));
+
+        OkHttpClient unsafeClient = getUnsafeOkHttpClient();
+        WebSocketFactory unsafeFactory = getUnsafeWebSocketFactory();
+
         jda = JDABuilder
                 .createDefault(TOKEN).enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                .setHttpClientBuilder(unsafeClient.newBuilder())
+                .setWebsocketFactory(unsafeFactory)
                 .build();
 
         jda.getPresence().setPresence(OnlineStatus.ONLINE,Activity.customStatus("Being a stone"));
@@ -302,5 +317,53 @@ public class Main {
 
             fetchMessagesRecursively(channel, newLastMessageId);
         });
+    }
+
+    private static OkHttpClient getUnsafeOkHttpClient() {
+        try {
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                        public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                        public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                    }
+            };
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new SecureRandom());
+
+            return new OkHttpClient.Builder()
+                    .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustAllCerts[0])
+                    .hostnameVerifier((hostname, session) -> true)
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static WebSocketFactory getUnsafeWebSocketFactory() {
+        try {
+            TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                        public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                        public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
+                    }
+            };
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new SecureRandom());
+
+            WebSocketFactory factory = new WebSocketFactory();
+            factory.setSSLContext(sslContext);
+            factory.setVerifyHostname(false); // GANZ WICHTIG!
+
+            return factory;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

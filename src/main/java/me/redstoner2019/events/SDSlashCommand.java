@@ -60,6 +60,16 @@ public class SDSlashCommand extends ListenerAdapter {
         String[] parts = event.getComponentId().split(":");
         String action = parts[0];
 
+        if(action.equals("stuck")){
+            String uuid = parts[1];
+            if(!StableDiffusion.currentId.equals(uuid) && !StableDiffusion.doneIds.contains(uuid)){
+                event.reply("This prompt is currently not being run!").setEphemeral(true).queue();
+                return;
+            }
+            startGeneration(uuid,event.getMessage());
+            event.reply("Restarted Updating!").setEphemeral(true).queue();
+        }
+
         if(action.equals("upscale")){
             event.deferReply().queue(message -> {
                 try{
@@ -110,25 +120,62 @@ public class SDSlashCommand extends ListenerAdapter {
         }
 
         if (action.equals("regenerate")) {
-            String id = parts[1];
+            MessageEmbed embed = event.getMessage().getEmbeds().get(0);
+
+            String model = "";
+            String positivePrompt = "";
+            String negativePrompt = "";
+            String basePrompt = "";
+            String sizeString = "";
+            String seedString = "";
+            int width = 256;
+            int height = 256;
+
+            for (int i = 0; i < embed.getFields().size(); i++) {
+                MessageEmbed.Field field = embed.getFields().get(i);
+
+                switch (field.getName()) {
+                    case "Model:" -> model = field.getValue().substring(1, field.getValue().length() - 1);
+                    case "Preset:" -> basePrompt = field.getValue().substring(1, field.getValue().length() - 1);
+                    case "Positive Prompt:" -> positivePrompt = field.getValue().substring(1, field.getValue().length() - 1);
+                    case "Negative Prompt:" -> negativePrompt = field.getValue().substring(1, field.getValue().length() - 1);
+                    case "Image Size:" -> {
+                        String sizeStringRaw = field.getValue().substring(1, field.getValue().length() - 1);
+                        String[] split = sizeStringRaw.split(" x ");
+                        width = Integer.parseInt(split[0]);
+                        height = Integer.parseInt(split[1]);
+                        sizeString = "CUSTOM";
+                    }
+                }
+            }
+
+
+            /*String id = parts[1];
             if(!settingsMap.containsKey(id)) {
                 event.reply("This is not valid anymore.").queue();
                 return;
-            }
-            parts = settingsMap.get(id).split(":");
-            String model = new String(Base64.decodeBase64(parts[0]));
-            String positivePrompt = new String(Base64.decodeBase64(parts[1]));
-            String negativePrompt = new String(Base64.decodeBase64(parts[2]));
-            String basePrompt = new String(Base64.decodeBase64(parts[3]));
-            String sizeString = new String(Base64.decodeBase64(parts[4]));
-            String seedString = new String(Base64.decodeBase64(parts[5]));
-            int width = byteArrayToInt(new String(Base64.decodeBase64(parts[6])).getBytes());
-            int height = byteArrayToInt(new String(Base64.decodeBase64(parts[7])).getBytes());
+            }*/
+            //parts = settingsMap.get(id).split(":");
+            //model = new String(Base64.decodeBase64(parts[0]));
+            //positivePrompt = new String(Base64.decodeBase64(parts[1]));
+            //negativePrompt = new String(Base64.decodeBase64(parts[2]));
+            //basePrompt = new String(Base64.decodeBase64(parts[3]));
+            //sizeString = new String(Base64.decodeBase64(parts[4]));
+            //seedString = new String(Base64.decodeBase64(parts[5]));
+            //width = byteArrayToInt(new String(Base64.decodeBase64(parts[6])).getBytes());
+            //height = byteArrayToInt(new String(Base64.decodeBase64(parts[7])).getBytes());
 
             event.deferReply().queue();
 
+            String finalModel = model;
+            String finalPositivePrompt = positivePrompt;
+            String finalNegativePrompt = negativePrompt;
+            String finalBasePrompt = basePrompt;
+            String finalSizeString = sizeString;
+            int finalWidth = width;
+            int finalHeight = height;
             event.getHook().sendMessage("Waiting...").queue(message -> {
-                startGeneration(message, model,positivePrompt,negativePrompt,basePrompt,sizeString,width,height,seedString);
+                startGeneration(message, finalModel, finalPositivePrompt, finalNegativePrompt, finalBasePrompt, finalSizeString, finalWidth, finalHeight,seedString);
             });
         }
     }
@@ -158,9 +205,9 @@ public class SDSlashCommand extends ListenerAdapter {
             ).queue();
         }
         if (event.getName().equals("generateimage") && event.getFocusedOption().getName().equals("size")) {
-            List<String> suggestions = new ArrayList<>(List.of("MASSIVE","LARGE","HIGH","MEDIUM","SMALL"));
+            List<String> suggestions = new ArrayList<>(List.of("MASSIVE","LARGE","HIGH","MEDIUM","SMALL","CUSTOM"));
             if(!Main.GPU_DETECTED){
-                suggestions = new ArrayList<>(List.of("HIGH","MEDIUM","SMALL"));
+                suggestions = new ArrayList<>(List.of("HIGH","MEDIUM","SMALL","CUSTOM"));
             }
 
             List<String> filteredSuggestions = suggestions.stream()
@@ -216,13 +263,38 @@ public class SDSlashCommand extends ListenerAdapter {
 
         String id = StableDiffusion.schedule(modelName,positivePrompt, negativePrompt,basePromptPreset,width, height, seed);
 
+        startGeneration(id, hook);
+    }
+
+    public static void startGeneration(String id, Message hook){
         boolean running = true;
+
+        JSONObject info = StableDiffusion.getStatus(id);
+
+        String model = info.getString("model");
+        String positivePrompt = info.getString("positivePrompt");
+        String negativePrompt = info.getString("negativePrompt");
+        String basePromptPreset = info.getString("positivePromptPreset");
+        int width = info.getInt("width");
+        int height = info.getInt("height");
+        int seed = info.getInt("seed");
+
+        for(String s : StableDiffusion.modelMappings.keySet()){
+            if(StableDiffusion.modelMappings.get(s).equals(model)){
+                System.out.println("Model passed: " + model);
+                model = StableDiffusion.modelMappings.get(s);
+                System.out.println("Model name found: " + model);
+                System.out.println("Modelmap: " + StableDiffusion.modelMappings);
+                break;
+            }
+        }
 
         int lastSpot = -1;
         final int widthf = width;
         final int heightf = height;
         final int seedf = seed;
         MessageEmbed oldEmbed = null;
+        Button regenerate = Button.primary("regenerate", "Generate again");
         while (running) {
             try{
                 JSONObject status = StableDiffusion.getStatus(id);
@@ -238,17 +310,19 @@ public class SDSlashCommand extends ListenerAdapter {
                                 .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
                                 .addField("Image Size:", "`" + widthf + " x " + heightf + "`", false)
                                 .addField("Seed:", "`" + seedf + "`", false)
+                                .addField("ID:",id,false)
                                 .setColor(Color.ORANGE);
 
                         MessageEmbed embed = embedBuilder.build();
 
                         if(!embedsAreEqual(embed,oldEmbed)) {
-                            hook.editMessageEmbeds(embedBuilder.build()).queue();
+                            hook.editMessageEmbeds(embedBuilder.build()).setActionRow(regenerate).queue();
                             hook.editMessage("Updated "+ "<t:" + (System.currentTimeMillis() / 1000) + ":R>").queue();
                             oldEmbed = embed;
                         }
                     }
                     case "Processing" -> {
+                        Button stuckButton = Button.danger("stuck:" + id, "Stuck? Reload.");
                         EmbedBuilder embedBuilder = new EmbedBuilder()
                                 .setTitle("Processing...")
                                 .addField("Progress:",getProgressBar(status.getFloat("progress")),false)
@@ -261,18 +335,19 @@ public class SDSlashCommand extends ListenerAdapter {
                                 .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
                                 .addField("Image Size:", "`" + widthf + " x " + heightf + "`", false)
                                 .addField("Seed:", "`" + seedf + "`", false)
+                                .addField("Running for:", "`" + (status.getLong("runningTime")/1000) + " Seconds`", false)
+                                .addField("ID:",id,false)
                                 //.addField("Last Update:","<t:" + (System.currentTimeMillis() / 1000) + ":R>",false)
                                 .setColor(Color.YELLOW);
 
                         MessageEmbed embed = embedBuilder.build();
 
-                        if(!embedsAreEqual(embed,oldEmbed)) {
-                            hook.editMessageEmbeds(embedBuilder.build()).queue();
-                            hook.editMessage("Updated "+ "<t:" + (System.currentTimeMillis() / 1000) + ":R>").queue();
-                            oldEmbed = embed;
-                        }
+                        hook.editMessageEmbeds(embedBuilder.build()).setActionRow(regenerate, stuckButton).queue();
+                        hook.editMessage("Updated "+ "<t:" + (System.currentTimeMillis() / 1000) + ":R>").queue();
+                        oldEmbed = embed;
                     }
                     case "switching_model" -> {
+                        Button stuckButton = Button.danger("stuck:" + id, "Stuck? Reload.");
                        EmbedBuilder embedBuilder = new EmbedBuilder()
                                 .setTitle("Switching Model... This might take a moment.")
                                 .addField("Model:", "`" + model + "`", false)
@@ -280,13 +355,14 @@ public class SDSlashCommand extends ListenerAdapter {
                                 .addField("Positive Prompt:", "`" + positivePrompt + "`", false)
                                 .addField("Negative Prompt:", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
                                 .addField("Image Size:", "`" + widthf + " x " + heightf + "`", false)
-                               .addField("Seed:", "`" + seedf + "`", false)
+                                .addField("Seed:", "`" + seedf + "`", false)
+                               .addField("ID:",id,false)
                                 .setColor(Color.YELLOW);
 
                         MessageEmbed embed = embedBuilder.build();
 
                         if(!embedsAreEqual(embed,oldEmbed)) {
-                            hook.editMessageEmbeds(embedBuilder.build()).queue();
+                            hook.editMessageEmbeds(embedBuilder.build()).setActionRow(regenerate, stuckButton).queue();
                             hook.editMessage("Updated "+ "<t:" + (System.currentTimeMillis() / 1000) + ":R>").queue();
                             oldEmbed = embed;
                         }
@@ -294,19 +370,6 @@ public class SDSlashCommand extends ListenerAdapter {
                     case "Done" -> {
                         running = false;
 
-                        String settingsString = Base64.encodeBase64String(model.getBytes()) + ":"
-                                + Base64.encodeBase64String(positivePrompt.getBytes()) + ":"
-                                + Base64.encodeBase64String(negativePrompt.getBytes()) + ":"
-                                + Base64.encodeBase64String(basePromptPreset.getBytes()) + ":"
-                                + Base64.encodeBase64String(sizeString.getBytes()) + ":"
-                                + Base64.encodeBase64String(seedString.getBytes()) + ":"
-                                + Base64.encodeBase64String(new String(intToByteArray(width)).getBytes()) + ":"
-                                + Base64.encodeBase64String(new String(intToByteArray(height)).getBytes());
-                        String newUUID = UUID.randomUUID().toString();
-
-                        settingsMap.put(newUUID,settingsString);
-
-                        Button regenerate = Button.primary("regenerate:" + newUUID, "Generate again");
                         Button deleteButton = Button.danger("delete", "Delete");
                         Button upscale = Button.primary("upscale", "Upscale");
 
@@ -318,6 +381,7 @@ public class SDSlashCommand extends ListenerAdapter {
                                 .addField("Negative Prompt: ", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
                                 .addField("Image Size:      ", "`" + widthf + " x " + heightf + "`", false)
                                 .addField("Seed:", "`" + seedf + "`", false)
+                                .addField("ID:",id,false)
                                 .addField("", " ", false)
                                 .addField("Uploading Image...","",false)
                                 .setColor(Color.GREEN);
@@ -351,14 +415,16 @@ public class SDSlashCommand extends ListenerAdapter {
                         try {
                             result = askModel("llama3:8b", userPrompt);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            result = "Error " + e.getMessage();
                         }
                         String filename = "image_" + System.currentTimeMillis() + ".png";
 
                         boolean nsfw = result.equals("YES");
                         if(nsfw) filename = "SPOILER_" + filename;
 
-                        ImageIO.write(image, "png", new File("nudes/" + filename));
+                        if(!new File("results/").exists()) new File("results/").mkdirs();
+
+                        ImageIO.write(image, "png", new File("results/" + filename));
 
                         embedBuilder = new EmbedBuilder()
                                 .setTitle("Done!")
@@ -410,7 +476,7 @@ public class SDSlashCommand extends ListenerAdapter {
                 e.printStackTrace();
             }
             try {
-                Thread.sleep(1000);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

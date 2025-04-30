@@ -21,6 +21,9 @@ public class StableDiffusion {
     public static HashMap<String, JSONObject> presetNameDisplayMappings = new HashMap<>();
     public static HashMap<String, String> modelMappings = new HashMap<>();
     public static String staticIP = "127.0.0.1";
+    public static List<String> doneIds = new ArrayList<>();
+
+    public static String currentId = "";
 
     static {
         reload();
@@ -108,6 +111,8 @@ public class StableDiffusion {
                         continue;
                     }
 
+                    currentId = wait.getString("id");
+
                     wait.put("status", "switching_model");
                     wait.put("progress", 0f);
                     wait.put("sampling_step",0);
@@ -133,7 +138,10 @@ public class StableDiffusion {
                         int width = wait.getInt("width");
                         int height = wait.getInt("height");
                         int steps = calculateSteps(width,height);
+                        double cfg_scale = 7.5;
                         steps = 30;
+                        //steps = 5;
+                        //cfg_scale = 2;
 
                         JSONObject requestJson = new JSONObject();
                         requestJson.put("prompt", positivePrompt);
@@ -141,7 +149,7 @@ public class StableDiffusion {
                         requestJson.put("steps", steps);
                         requestJson.put("sampler_name", "DPM++ 2M");
                         requestJson.put("sampler_name", "Euler a");
-                        requestJson.put("cfg_scale", 7.5);
+                        requestJson.put("cfg_scale", cfg_scale);
                         requestJson.put("width", width);
                         requestJson.put("height", height);
                         requestJson.put("sd_model_checkpoint", wait.getString("model"));
@@ -150,6 +158,9 @@ public class StableDiffusion {
 
                         ensureModelLoaded(wait.getString("model"));
 
+                        long startTime = System.currentTimeMillis();
+
+                        wait.put("runningTime",System.currentTimeMillis() - startTime);
                         wait.put("status", "Processing");
                         status.put(wait.getString("id"), wait);
 
@@ -189,11 +200,12 @@ public class StableDiffusion {
                                         waitFinal.put("sampling_step",pr.getJSONObject("state").getInt("sampling_step"));
                                         waitFinal.put("sampling_steps",pr.getJSONObject("state").getInt("sampling_steps"));
                                         waitFinal.put("eta_relative",(float) pr.getDouble("eta_relative"));
+                                        waitFinal.put("runningTime",System.currentTimeMillis() - startTime);
 
                                         waitFinal.put("progress", progress);
                                         status.put(waitFinal.getString("id"), waitFinal);
 
-                                        if(waitFinal.getInt("sampling_step") == waitFinal.getInt("sampling_steps")){
+                                        if(progress >= 1.0){
                                             break;
                                         }
                                         errors = 0;
@@ -221,6 +233,9 @@ public class StableDiffusion {
 
                         //ImageIO.write(results.get(wait.getString("id")),"PNG",new File("nudes/sd/" + UUID.randomUUID() + "_output.png"));
 
+                        currentId = "";
+                        doneIds.add(wait.getString("id"));
+
                         wait.put("status", "Done");
                         status.put(wait.getString("id"), wait);
 
@@ -230,8 +245,10 @@ public class StableDiffusion {
                             status.put(temp.getString("id"), temp);
                         }
                     } catch (Exception e){
+                        currentId = "";
                         wait.put("status", "Error");
                         wait.put("error", ChatEvent.exceptionToString(e));
+                        doneIds.add(wait.getString("id"));
                         status.put(wait.getString("id"), wait);
 
                         e.printStackTrace();

@@ -58,7 +58,7 @@ public class Upscale {
     }
 
     public static void main(String[] args) throws IOException {
-        BufferedImage upscaled = upscaleImage(ImageIO.read(new File("C:\\Users\\Redstoner_2019\\Downloads\\image - 2025-04-29T110106.868.png")),2.0, "R-ESRGAN 4x+");
-        ImageIO.write(upscaled,"png",new File("upscaled.png"));
+        BufferedImage upscaled = upscaleImage(ImageIO.read(new File("C:\\Users\\Redstoner_2019\\Downloads\\00694-638755291-200x300.jpg")),2.0, "R-ESRGAN 4x+");
+        ImageIO.write(upscaled,"png",new File("upscaled2.png"));
     }
 }

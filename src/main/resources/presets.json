@@ -40,5 +40,11 @@
     "internalName": "nude_anime",
     "positivePrompt": "1girl, solo, masterpiece, best quality, ultra-detailed, highly detailed eyes, beautiful detailed face, perfect anatomy, detailed hair, looking at viewer, dynamic pose, intricate clothes, fantasy background, vibrant colors, cinematic lighting, long slightly wavy hair, detailed background, naked, nipples",
     "negativePrompt": "lowres, bad anatomy, bad hands, bad fingers, blurry, bad face, deformed, mutated, extra limbs, missing fingers, cloned face, poorly drawn hands, watermark, signature, text, worst quality, jpeg artifacts"
+  },
+  {
+    "displayName": "Default",
+    "internalName": "default",
+    "positivePrompt": "masterpiece, best quality, high resolution, cinematic lighting, ambient lighting, dramatic shadows, soft focus, vibrant colors, intricate details, highly detailed, dynamic composition, atmospheric, depth of field, glowing light, artistic, sharp focus, smooth shading",
+    "negativePrompt": "lowres, bad anatomy, extra limbs, missing limbs, blurry, mutated, deformed, out of frame, poorly drawn, cloned, distorted, disfigured, bad proportions, worst quality, jpeg artifacts, watermark, signature, text"
   }
 ]

@@ -48,7 +48,8 @@ public class SlashCommand extends ListenerAdapter {
             event.deferReply().queue(message -> {
                 try {
                     String prompt = event.getOption("message").getAsString();
-                    String response = Ollama.askModel("tinyllama:1.1b",prompt);
+                    String model = event.getOption("model") != null ? event.getOption("model").getAsString() : "llama3:8b";
+                    String response = Ollama.askModel(model,prompt);
                     response = "Prompt: `" + prompt + "`\n\n" + response;
 
                     if(response.length() < 2000){
@@ -451,6 +452,20 @@ public class SlashCommand extends ListenerAdapter {
 
         if (event.getName().equals("sfx") && event.getFocusedOption().getName().equals("sound")) {
             List<String> suggestions = new ArrayList<>(Main.sfx.keySet());
+
+            List<String> filteredSuggestions = suggestions.stream()
+                    .filter(s -> s.toLowerCase().startsWith(event.getFocusedOption().getValue().toLowerCase()))
+                    .limit(25)
+                    .toList();
+
+            event.replyChoices(filteredSuggestions.stream()
+                    .map(choice -> new net.dv8tion.jda.api.interactions.commands.Command.Choice(choice, choice))
+                    .toList()
+            ).queue();
+        }
+
+        if (event.getName().equals("chat") && event.getFocusedOption().getName().equals("model")) {
+            List<String> suggestions = new ArrayList<>(List.of("mistral","llama2:13b-text","llama2:13b-text-q4_0","llama3:8b","tinyllama:1.1b"));
 
             List<String> filteredSuggestions = suggestions.stream()
                     .filter(s -> s.toLowerCase().startsWith(event.getFocusedOption().getValue().toLowerCase()))

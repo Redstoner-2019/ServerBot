@@ -144,7 +144,7 @@ public class Main {
                 if(!randomMessageChannel.containsKey(g.getId())) randomMessageChannel.put(g.getId(), new ArrayList<>());
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
 
         Thread t = new Thread(new Runnable() {
@@ -157,7 +157,8 @@ public class Main {
                 }
 
                 for(Guild g : jda.getGuilds()){
-                    if(true) break;
+                    if(false) break;
+                    System.out.println("Updating for " + g);
                     g.updateCommands().queue();
                     g.updateCommands().addCommands(
                             Commands.slash("vc","The vc command!")
@@ -181,7 +182,8 @@ public class Main {
                                     .addOption(OptionType.ATTACHMENT, "file", "The nude", true),
                             Commands.slash("nude","Show a random nude (You are naughty)"),
                             Commands.slash("chat","Ask the AI model something!")
-                                    .addOption(OptionType.STRING,"message","Your Prompt",true),
+                                    .addOption(OptionType.STRING,"message","Your Prompt",true)
+                                    .addOption(OptionType.STRING,"model","The LLM",false, true),
                             Commands.slash("generateimage","AI Generate an Image!")
                                     .addOption(OptionType.STRING,"model","The generation Model", true, true)
                                     .addOption(OptionType.STRING,"positiveprompt","Positive Prompt (This is what you want the AI to do)", true)
@@ -191,6 +193,7 @@ public class Main {
                                     .addOption(OptionType.INTEGER,"width","Width (128 < 2048)", false)
                                     .addOption(OptionType.INTEGER,"height","Height (128 < 2048)", false)
                                     .addOption(OptionType.STRING,"seed","Seed", false)
+                                    .addOption(OptionType.NUMBER,"age","Controls the age. Input number between 0 and 1. ⚠️ NOT GUARANTEED TO WORK WITH EVERY MODEL! ⚠️", false)
                     ).queue();
                 }
 

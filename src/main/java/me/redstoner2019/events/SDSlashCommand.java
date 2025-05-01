@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -41,13 +42,25 @@ public class SDSlashCommand extends ListenerAdapter {
         if(event.getName().equals("generateimage")){
             event.deferReply().queue();
             String model = event.getOption("model").getAsString();
-            String positivePrompt = event.getOption("positiveprompt").getAsString();
             String negativePrompt = event.getOption("negativeprompt") != null ? event.getOption("negativeprompt").getAsString() : "";
             String basePromptPreset = event.getOption("basepromtpreset") != null ? event.getOption("basepromtpreset").getAsString() : "";
             String sizeString = event.getOption("size") != null ? event.getOption("size").getAsString() : "MEDIUM";
             String seedString = event.getOption("seed") != null ? event.getOption("seed").getAsString() : "-1";
             int width = event.getOption("width") != null ? event.getOption("width").getAsInt() : 128;
             int height = event.getOption("height") != null ? event.getOption("height").getAsInt() : 128;
+            double age = event.getOption("age") != null ? event.getOption("age").getAsDouble(): -100;
+
+            if(age != -100){
+                if(age < 0) age = 0; else if(age > 1) age = 1;
+                age = (age * 8) - 4;
+                String positivePrompt ="<lora:age_slider_v2:" + age + "> " +  event.getOption("positiveprompt").getAsString();
+
+                event.getHook().sendMessage("Waiting...").queue(message -> {
+                    startGeneration(message, model,positivePrompt,negativePrompt,basePromptPreset,sizeString,width,height,seedString);
+                });
+                return;
+            }
+            String positivePrompt = event.getOption("positiveprompt").getAsString();
 
             event.getHook().sendMessage("Waiting...").queue(message -> {
                 startGeneration(message, model,positivePrompt,negativePrompt,basePromptPreset,sizeString,width,height,seedString);
@@ -280,16 +293,17 @@ public class SDSlashCommand extends ListenerAdapter {
         int seed = info.getInt("seed");
 
         for(String s : StableDiffusion.modelMappings.keySet()){
+            System.out.println(s);
             if(StableDiffusion.modelMappings.get(s).equals(model)){
-                System.out.println("Model passed: " + model);
-                model = StableDiffusion.modelMappings.get(s);
+                System.out.println("Model passed: '" + model + "'");
+                model = s;
                 System.out.println("Model name found: " + model);
-                System.out.println("Modelmap: " + StableDiffusion.modelMappings);
                 break;
             }
         }
 
-        int lastSpot = -1;
+        if(positivePrompt.length() > 1024) positivePrompt = positivePrompt.substring(0,1000);
+
         final int widthf = width;
         final int heightf = height;
         final int seedf = seed;
@@ -302,7 +316,7 @@ public class SDSlashCommand extends ListenerAdapter {
                     case "In Queue" -> {
                         EmbedBuilder embedBuilder = new EmbedBuilder()
                                 .setTitle("Waiting in Queue...")
-                                .addField("Your Spot:",lastSpot + "",false)
+                                .addField("Your Spot:",status.getString("queueSpot"),false)
                                 .addField("","",false)
                                 .addField("Model:", "`" + model + "`", false)
                                 .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
@@ -434,19 +448,27 @@ public class SDSlashCommand extends ListenerAdapter {
                                 .addField("Negative Prompt: ", "`" + (negativePrompt.isEmpty() ? " " : negativePrompt) + "`", false)
                                 .addField("Image Size:      ", "`" + image.getWidth() + " x " + image.getHeight() + "`", false)
                                 .addField("Seed:", "`" + seedf + "`", false)
-                                .setColor(Color.GREEN)
-                                .setThumbnail("attachment://thumbnail.png")
-                                .setImage("attachment://" + filename);
+                                .setColor(Color.GREEN);
 
-                        if(nsfw) embedBuilder.addField("NSFW","⚠️ Potentially NSFW - click to reveal",false);
+                        if(hook.getChannel().asTextChannel().isNSFW() && nsfw) nsfw = false;
+                        if(nsfw) {
+                            embedBuilder.addField("NSFW", "⚠️ Potentially NSFW - click to reveal", false);
+                            hook.editMessageEmbeds(embedBuilder.build())
+                                    .setFiles(
+                                            //FileUpload.fromData(thumbnailData, "thumbnail.png"),
+                                            FileUpload.fromData(imageData, filename).asSpoiler()
+                                    )
+                                    .queue();
+                        } else {
+                            embedBuilder.setImage("attachment://" + filename);
+                            hook.editMessageEmbeds(embedBuilder.build())
+                                    .setFiles(
+                                            //FileUpload.fromData(thumbnailData, "thumbnail.png"),
+                                            FileUpload.fromData(imageData, filename)
+                                    )
+                                    .queue();
+                        }
 
-                        hook.editMessageEmbeds(embedBuilder.build())
-                                .setFiles(
-                                        FileUpload.fromData(thumbnailData, "thumbnail.png"),
-                                        FileUpload.fromData(imageData, filename)
-                                )
-                                .queue(sentMessage -> {
-                                });
 
                         hook.editMessage("").queue();
                     }

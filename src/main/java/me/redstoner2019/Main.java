@@ -2,10 +2,7 @@ package me.redstoner2019;
 
 import com.neovisionaries.ws.client.WebSocketFactory;
 import me.redstoner2019.chatgpt.StableDiffusion;
-import me.redstoner2019.events.ChatEvent;
-import me.redstoner2019.events.JoinEvent;
-import me.redstoner2019.events.SDSlashCommand;
-import me.redstoner2019.events.SlashCommand;
+import me.redstoner2019.events.*;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
@@ -56,7 +53,7 @@ public class Main {
     public static HashMap<String, Boolean> vcreading = new HashMap<>();
     public static HashMap<String, Boolean> prefixReading = new HashMap<>();
     public static HashMap<VoiceChannel, LocalDateTime> lastReadTimestamp = new HashMap<>();
-    public static boolean TEST = true;
+    public static boolean TEST = false;
     public static boolean GPU_DETECTED = false;
     /**
      * Nudes Stuff
@@ -81,6 +78,7 @@ public class Main {
         jda.addEventListener(new SlashCommand());
         jda.addEventListener(new JoinEvent());
         jda.addEventListener(new SDSlashCommand());
+        jda.addEventListener(new SettingsSlashCommand());
 
         StableDiffusion.startScheduler();
 
@@ -89,23 +87,16 @@ public class Main {
         statusses.add("Cracking the reality");
         statusses.add("Cracking the cracking crack out of meth");
         statusses.add("Cracktastic!✨");
+        if(TEST) {
+            statusses.clear();
+            statusses.add("✨");
+            statusses.add("✨");
+            statusses.add("✨");
+            statusses.add("✨");
+        }
 
         GPU_DETECTED = !GraphicsEnvironment.isHeadless();
 
-        /*sfx.put("uwu","uwu.mp3");
-        sfx.put("happi","happy-happy-happy-song.mp3");
-        sfx.put("chipi","chipi-chipi-chapa-chapa.mp3");
-        sfx.put("ahh","ahh.mp3");
-        sfx.put("sus","sus.mp3");
-        sfx.put("cri","cri.mp3");
-        sfx.put("dasgehtdochnicht","dasgehtdochnicht.mp3");
-        sfx.put("amogus","amogus.mp3");
-        sfx.put("dumdumdumdudidui","dumdumdumdudidui.mp3");
-        sfx.put("thomas","thomas.mp3");
-        sfx.put("pornhub","pornhub.mp3");
-        sfx.put("itsame","itsame.mp3");
-        sfx.put("mariobedoo","mariobedoo.mp3");
-        sfx.put("leave","leave.mp3");*/
         try {
             FileInputStream fis = new FileInputStream("save.json");
             JSONObject obj = new JSONObject(new String(fis.readAllBytes()));
@@ -157,7 +148,7 @@ public class Main {
                 }
 
                 for(Guild g : jda.getGuilds()){
-                    if(false) break;
+                    if(true) break;
                     System.out.println("Updating for " + g);
                     g.updateCommands().queue();
                     g.updateCommands().addCommands(
@@ -193,7 +184,10 @@ public class Main {
                                     .addOption(OptionType.INTEGER,"width","Width (128 < 2048)", false)
                                     .addOption(OptionType.INTEGER,"height","Height (128 < 2048)", false)
                                     .addOption(OptionType.STRING,"seed","Seed", false)
-                                    .addOption(OptionType.NUMBER,"age","Controls the age. Input number between 0 and 1. ⚠️ NOT GUARANTEED TO WORK WITH EVERY MODEL! ⚠️", false)
+                                    .addOption(OptionType.NUMBER,"age","Controls the age. Input number between 0 and 1. ⚠️ NOT GUARANTEED TO WORK WITH EVERY MODEL! ⚠️", false),
+                            Commands.slash("settings","Administrator only")
+                                    .addOption(OptionType.STRING,"key","✨",true, true)
+                                    .addOption(OptionType.STRING,"value","✨",false, true)
                     ).queue();
                 }
 

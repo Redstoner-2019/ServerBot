@@ -1,6 +1,8 @@
 package me.redstoner2019.chatgpt;
 
 import me.redstoner2019.events.ChatEvent;
+import me.redstoner2019.utils.Setting;
+import me.redstoner2019.events.SettingsSlashCommand;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -129,7 +131,8 @@ public class StableDiffusion {
                         positivePrompt = positivePrompt + ", " + wait.getString("positivePrompt");
                         negativePrompt = negativePrompt + ", " + wait.getString("negativePrompt");
 
-                        URL url = new URL("http://" + staticIP + ":7860/sdapi/v1/txt2img");
+                        URL url = new URL("http://" + SettingsSlashCommand.getSettingValue(Setting.STABLE_DIFFUSION_ADDRESS,"1143990894589128745") + "/sdapi/v1/txt2img");
+                        System.out.println(url);
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                         connection.setRequestMethod("POST");
                         connection.setRequestProperty("Content-Type", "application/json");

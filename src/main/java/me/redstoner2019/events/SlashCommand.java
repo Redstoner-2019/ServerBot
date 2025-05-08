@@ -4,9 +4,7 @@ import me.redstoner2019.Main;
 import me.redstoner2019.chatgpt.Ollama;
 import me.redstoner2019.tts.TTSPlayer;
 import me.redstoner2019.ttsaws.TwitchTTS;
-import me.redstoner2019.utils.CompressionUtility;
-import me.redstoner2019.utils.LongMessageSender;
-import me.redstoner2019.utils.SHA256Hash;
+import me.redstoner2019.utils.*;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -15,7 +13,6 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -24,7 +21,6 @@ import software.amazon.awssdk.services.polly.model.VoiceId;
 
 import java.awt.*;
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -41,6 +37,21 @@ public class SlashCommand extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+        if(Settings.getSettingValue(Setting.SET_BOT_DISABLED,event.getGuild().getId()).equals("true")){
+            event.reply("The bot is disabled on this server. Please contact the Server admins if you believe this is a mistake.").setEphemeral(true).queue();
+            return;
+        }
+
+        if(new JSONObject(Settings.getSettingValue(Setting.CHANNELS_DISABLED_LIST,event.getGuild().getId())).has(event.getChannelId())){
+            event.reply("The user of this bot in this channel has been disabled. Please contact the Server admins if you believe this is a mistake.").setEphemeral(true).queue();
+            return;
+        }
+
+        if(new JSONObject(Settings.getSettingValue(Setting.USER_BLOCKLIST_LIST,event.getGuild().getId())).has(event.getUser().getId())){
+            event.reply("You have been blocked from using this bot. Please contact the Server admins if you believe this is a mistake.").setEphemeral(true).queue();
+            return;
+        }
+
         String user = event.getUser().getName();
         Guild guild = event.getGuild();
 
@@ -307,10 +318,17 @@ public class SlashCommand extends ListenerAdapter {
                 return;
             }*/
 
+            System.out.println(event.getChannel().getClass());
+            if(!(event.getChannel() instanceof TextChannel)){
+                event.reply("This command can only be used in a TextChannel.").setEphemeral(true).queue();
+                return;
+            }
+
             MessageChannel channel = event.getChannel();
+            boolean saftetyActivated = Boolean.parseBoolean(SettingsSlashCommand.getSettingValue(Setting.NSFW_IN_NSFW_CHANNELS_FORCED,event.getGuild().getId()));
 
             if (channel instanceof TextChannel textChannel) {
-                if (!textChannel.isNSFW() || textChannel.getId().equals("1108922674585018459")) {
+                if ((!textChannel.isNSFW() || textChannel.getId().equals("1108922674585018459")) && saftetyActivated) {
                     event.reply("🔞 This command is only allowed in NSFW channels.").queue();
                     return;
                 }

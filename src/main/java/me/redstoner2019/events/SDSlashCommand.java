@@ -3,31 +3,26 @@ package me.redstoner2019.events;
 import me.redstoner2019.Main;
 import me.redstoner2019.chatgpt.StableDiffusion;
 import me.redstoner2019.upscale.Upscale;
+import me.redstoner2019.utils.Setting;
+import me.redstoner2019.utils.Settings;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.InteractionHook;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
-import org.apache.commons.codec.binary.Base64;
 import org.json.JSONObject;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 
@@ -39,6 +34,16 @@ public class SDSlashCommand extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+        if(new JSONObject(Settings.getSettingValue(Setting.CHANNELS_DISABLED_LIST,event.getGuild().getId())).has(event.getChannelId())){
+            event.reply("The user of this bot in this channel has been disabled. Please contact the Server admins if you believe this is a mistake.").setEphemeral(true).queue();
+            return;
+        }
+
+        if(new JSONObject(Settings.getSettingValue(Setting.USER_BLOCKLIST_LIST,event.getGuild().getId())).has(event.getUser().getId())){
+            event.reply("You have been blocked from using this bot. Please contact the Server admins if you believe this is a mistake.").setEphemeral(true).queue();
+            return;
+        }
+
         if(event.getName().equals("generateimage")){
             event.deferReply().queue();
             String model = event.getOption("model").getAsString();
@@ -70,6 +75,21 @@ public class SDSlashCommand extends ListenerAdapter {
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
+        if(Settings.getSettingValue(Setting.SET_BOT_DISABLED,event.getGuild().getId()).equals("true")){
+            event.reply("The bot is disabled on this server. Please contact the Server admins if you believe this is a mistake.").setEphemeral(true).queue();
+            return;
+        }
+
+        if(new JSONObject(Settings.getSettingValue(Setting.CHANNELS_DISABLED_LIST,event.getGuild().getId())).has(event.getChannelId())){
+            event.reply("The user of this bot in this channel has been disabled. Please contact the Server admins if you believe this is a mistake.").setEphemeral(true).queue();
+            return;
+        }
+
+        if(new JSONObject(Settings.getSettingValue(Setting.USER_BLOCKLIST_LIST,event.getGuild().getId())).has(event.getUser().getId())){
+            event.reply("You have been blocked from using this bot. Please contact the Server admins if you believe this is a mistake.").setEphemeral(true).queue();
+            return;
+        }
+
         String[] parts = event.getComponentId().split(":");
         String action = parts[0];
 
@@ -307,16 +327,22 @@ public class SDSlashCommand extends ListenerAdapter {
         final int widthf = width;
         final int heightf = height;
         final int seedf = seed;
+        long lastEdit = System.currentTimeMillis();
         MessageEmbed oldEmbed = null;
         Button regenerate = Button.primary("regenerate", "Generate again");
+        String lastStatus = "";
         while (running) {
             try{
                 JSONObject status = StableDiffusion.getStatus(id);
+                if(!lastStatus.equals(status.getString("status"))) lastEdit = 0;
+                lastStatus = status.getString("status");
                 switch (status.getString("status")) {
                     case "In Queue" -> {
+                        if(System.currentTimeMillis() - lastEdit < 15000) break;
+                        lastEdit = System.currentTimeMillis();
                         EmbedBuilder embedBuilder = new EmbedBuilder()
                                 .setTitle("Waiting in Queue...")
-                                .addField("Your Spot:",status.getString("queueSpot"),false)
+                                .addField("Your Spot:","`" + status.getInt("queueSpot") + "`",false)
                                 .addField("","",false)
                                 .addField("Model:", "`" + model + "`", false)
                                 .addField("Preset:", "`" + (basePromptPreset.isEmpty() ? "None" : basePromptPreset) + "`", false)
@@ -336,6 +362,8 @@ public class SDSlashCommand extends ListenerAdapter {
                         }
                     }
                     case "Processing" -> {
+                        if(System.currentTimeMillis() - lastEdit < 15000) break;
+                        lastEdit = System.currentTimeMillis();
                         Button stuckButton = Button.danger("stuck:" + id, "Stuck? Reload.");
                         EmbedBuilder embedBuilder = new EmbedBuilder()
                                 .setTitle("Processing...")
@@ -361,6 +389,8 @@ public class SDSlashCommand extends ListenerAdapter {
                         oldEmbed = embed;
                     }
                     case "switching_model" -> {
+                        if(System.currentTimeMillis() - lastEdit < 15000) break;
+                        lastEdit = System.currentTimeMillis();
                         Button stuckButton = Button.danger("stuck:" + id, "Stuck? Reload.");
                        EmbedBuilder embedBuilder = new EmbedBuilder()
                                 .setTitle("Switching Model... This might take a moment.")
@@ -382,6 +412,7 @@ public class SDSlashCommand extends ListenerAdapter {
                         }
                     }
                     case "Done" -> {
+                        lastEdit = System.currentTimeMillis();
                         running = false;
 
                         Button deleteButton = Button.danger("delete", "Delete");
@@ -423,17 +454,24 @@ public class SDSlashCommand extends ListenerAdapter {
                         }
                         byte[] thumbnailData = os.toByteArray();
 
-                        String userPrompt = "Reply with ONLY 'YES' or 'NO'. No explanation. Capital letters only. Does the following prompt imply nudity, sexual content, violence, or gore: '" + positivePrompt + "'?";
-
-                        String result = "Error";
-                        try {
-                            result = askModel("llama3:8b", userPrompt);
-                        } catch (Exception e) {
-                            result = "Error " + e.getMessage();
-                        }
+                        boolean nsfw = false;
+                        boolean isNSFWChannel = hook.getChannel().asTextChannel().isNSFW();
                         String filename = "image_" + System.currentTimeMillis() + ".png";
 
-                        boolean nsfw = result.equals("YES");
+                        if(!isNSFWChannel && Boolean.parseBoolean(SettingsSlashCommand.getSettingValue(Setting.NSFW_IN_NSFW_CHANNELS_FORCED,hook.getGuildId()))){
+                            String userPrompt = "Reply with ONLY 'YES' or 'NO'. No explanation. Capital letters only. Does the following prompt imply nudity, sexual content, violence, or gore: '" + positivePrompt + "'?";
+
+                            String result = "Error";
+                            try {
+                                result = askModel("llama3:8b", userPrompt);
+                            } catch (Exception e) {
+                                result = "Error " + e.getMessage();
+                            }
+
+                            nsfw = result.equals("YES");
+                        }
+
+
                         if(nsfw) filename = "SPOILER_" + filename;
 
                         if(!new File("results/").exists()) new File("results/").mkdirs();
@@ -450,7 +488,7 @@ public class SDSlashCommand extends ListenerAdapter {
                                 .addField("Seed:", "`" + seedf + "`", false)
                                 .setColor(Color.GREEN);
 
-                        if(hook.getChannel().asTextChannel().isNSFW() && nsfw) nsfw = false;
+                        if(isNSFWChannel && nsfw) nsfw = false;
                         if(nsfw) {
                             embedBuilder.addField("NSFW", "⚠️ Potentially NSFW - click to reveal", false);
                             hook.editMessageEmbeds(embedBuilder.build())

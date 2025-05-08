@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ArtifactsWorkspaceSettings">
     <artifacts-to-build>
-      <artifact name="TheyServerBotTest:jar" />
+      <artifact name="TheyServerBot:jar" />
     </artifacts-to-build>
   </component>
   <component name="AutoImportSettings">
@@ -10,13 +10,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="590d5e99-f63a-4a97-b64b-aaed4217b6ae" name="Changes" comment="done nuthin">
+      <change afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/sshConfigs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/webServers.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/events/SettingsSlashCommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/utils/Setting.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/utils/Settings.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/redstoner2019/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/redstoner2019/Viewer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/Viewer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/redstoner2019/chatgpt/Ollama.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/chatgpt/Ollama.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/redstoner2019/chatgpt/StableDiffusion.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/chatgpt/StableDiffusion.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/me/redstoner2019/events/ChatEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/events/ChatEvent.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/redstoner2019/events/SDSlashCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/events/SDSlashCommand.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/me/redstoner2019/events/SlashCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/events/SlashCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/me/redstoner2019/upscale/Upscale.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/me/redstoner2019/upscale/Upscale.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/presets.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/presets.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,6 +42,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Redstoner-2019&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Redstoner-2019/ServerBot.git&quot;,
+    &quot;accountId&quot;: &quot;c55144a4-7569-434d-b97c-45077ee36bca&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 8
@@ -42,36 +63,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Diashow.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;Application.NudeMaker.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Ollama.executor&quot;: &quot;Run&quot;,
-    &quot;Application.Upscale.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Artifacts&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Diashow.executor": "Run",
+    "Application.Main.executor": "Run",
+    "Application.NudeMaker.executor": "Run",
+    "Application.Ollama.executor": "Run",
+    "Application.Upscale.executor": "Run",
+    "Application.VibrancySlider.executor": "Run",
+    "Application.Viewer.executor": "Run",
+    "Maven.TheyServerBot [clean].executor": "Run",
+    "Maven.TheyServerBot [install].executor": "Run",
+    "Maven.TheyServerBot [package].executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Artifacts",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Application.Main">
-    <configuration name="Diashow" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="Diashow" />
-      <module name="TheyServerBot" />
-      <option name="PROGRAM_PARAMETERS" value="C:\Users\Redstoner_2019\Documents\porn" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="me.redstoner2019.Main" />
       <module name="TheyServerBot" />
@@ -105,12 +126,19 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Upscale" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="me.redstoner2019.upscale.Upscale" />
+    <configuration name="VibrancySlider" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="VibrancySlider" />
+      <module name="TheyServerBot" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Viewer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="me.redstoner2019.Viewer" />
       <module name="TheyServerBot" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="me.redstoner2019.upscale.*" />
+          <option name="PATTERN" value="me.redstoner2019.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -119,27 +147,27 @@
       </method>
     </configuration>
     <list>
+      <item itemvalue="Application.Viewer" />
       <item itemvalue="Application.NudeMaker" />
-      <item itemvalue="Application.Diashow" />
+      <item itemvalue="Application.VibrancySlider" />
       <item itemvalue="Application.Main" />
       <item itemvalue="Application.Ollama" />
-      <item itemvalue="Application.Upscale" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Application.Main" />
-        <item itemvalue="Application.Upscale" />
+        <item itemvalue="Application.Viewer" />
         <item itemvalue="Application.Ollama" />
-        <item itemvalue="Application.Diashow" />
         <item itemvalue="Application.NudeMaker" />
+        <item itemvalue="Application.VibrancySlider" />
       </list>
     </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.18034.62" />
-        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.18034.62" />
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.25410.109" />
+        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-IU-251.25410.109" />
       </set>
     </attachedChunks>
   </component>
@@ -164,7 +192,17 @@
       <workItem from="1745912060425" duration="22720000" />
       <workItem from="1745970306130" duration="10186000" />
       <workItem from="1746027918398" duration="14759000" />
-      <workItem from="1746106034720" duration="10829000" />
+      <workItem from="1746106034720" duration="11492000" />
+      <workItem from="1746187550130" duration="4438000" />
+      <workItem from="1746280512570" duration="1243000" />
+      <workItem from="1746293854389" duration="3777000" />
+      <workItem from="1746372667364" duration="1845000" />
+      <workItem from="1746455197334" duration="2678000" />
+      <workItem from="1746562445423" duration="598000" />
+      <workItem from="1746637695671" duration="596000" />
+      <workItem from="1746685226198" duration="7178000" />
+      <workItem from="1746704204243" duration="827000" />
+      <workItem from="1746705039066" duration="11822000" />
     </task>
     <task id="LOCAL-00002" summary="done nuthin">
       <option name="closed" value="true" />
@@ -174,7 +212,15 @@
       <option name="project" value="LOCAL" />
       <updated>1745979661848</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="done nuthin">
+      <option name="closed" value="true" />
+      <created>1746141289771</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1746141289771</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -195,5 +241,9 @@
     <MESSAGE value="initial commit" />
     <MESSAGE value="done nuthin" />
     <option name="LAST_COMMIT_MESSAGE" value="done nuthin" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

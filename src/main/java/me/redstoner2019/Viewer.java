@@ -18,7 +18,7 @@ public class Viewer {
         frame.setSize(1920,1080);
         frame.setLocationRelativeTo(null);
 
-        File file = new File("nudes");
+        File file = new File("C:\\Users\\Redstoner_2019\\Documents\\stonybottransfer");
 
         JPanel panel = new JPanel();
         panel.setLayout(null);

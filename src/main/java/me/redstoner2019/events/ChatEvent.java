@@ -12,6 +12,8 @@ import me.redstoner2019.Main;
 import me.redstoner2019.tts.AudioPlayerSendHandler;
 import me.redstoner2019.tts.TTSPlayer;
 import me.redstoner2019.ttsaws.TwitchTTS;
+import me.redstoner2019.utils.Setting;
+import me.redstoner2019.utils.Settings;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
@@ -20,6 +22,7 @@ import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
+import org.json.JSONObject;
 import software.amazon.awssdk.services.polly.model.Engine;
 import software.amazon.awssdk.services.polly.model.VoiceId;
 
@@ -36,6 +39,18 @@ import static me.redstoner2019.Main.jda;
 public class ChatEvent extends ListenerAdapter {
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
+        if(new JSONObject(Settings.getSettingValue(Setting.CHANNELS_DISABLED_LIST,event.getGuild().getId())).has(event.getChannel().getId())){
+            return;
+        }
+
+        if(Settings.getSettingValue(Setting.SET_BOT_DISABLED,event.getGuild().getId()).equals("true")){
+            return;
+        }
+
+        if(new JSONObject(Settings.getSettingValue(Setting.USER_BLOCKLIST_LIST,event.getGuild().getId())).has(event.getMember().getId())){
+            event.getMessage().reply("You have been blocked from using this bot. Please contact the Server admins if you believe this is a mistake.").queue();
+            return;
+        }
         try{
             if(event.getAuthor().isBot()) return;
             boolean isVoice = event.getChannel() instanceof VoiceChannel;

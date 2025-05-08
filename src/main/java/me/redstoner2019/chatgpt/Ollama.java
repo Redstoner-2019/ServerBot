@@ -53,6 +53,82 @@ public class Ollama {
                     "\n" +
                     "Prompt:  \n" + "multiple girls, group of girls,2girls, 3girls, group of girls, friends, duo, trio , Awakening Desires, Anime-inspired Masterpiece, Best Quality, Horny Odyssey, Backdrop, Fantastical world, Vibrant colors, Enchanting landscapes, Single girl, Radiant, Standing tall, Detailing, Hair, Strands, Meticulously crafted, Dynamic lighting, Emotions, Raw, Intentions, Attire, Naked, Empowered, Inhibitions, Rolls of eyes, Dominance, Control, Tongue, Glistens, Unspoken desires, Ambiance, Sexual content, Erotic, Intensity, Sperm stains, Tears of sweat, Props, Sex toys, Kinks, Preferences, Setting, Suggestive objects, Emotions, Seductive confidence, Passion, Raw emotion, Sensual, Provocative, Arousing, Coldest hearts, graphic, nude, sex toys ,extreme, raw, unapologetic, unforgiving, forced, nsfw, naked, horny, eye rolls, tongue, sperm, fluid, tears, sweat, posing, sex toys, kinks, sexual content, naked, 1girl, hardcore sex, Erotic, Intense, Passionate, Seductive, Explicit, Graphic, Bold, Sensual, Arousing, Provocative, Nipples";
 
+            userPrompt = "Can you analyze the following song lyrics? [Spoken]\n" +
+                    "\"And then I found out how hard it is to really change\n" +
+                    "Even Hell can get comfy once you've settled in\n" +
+                    "I just wanted the numb inside me to leave\n" +
+                    "No matter how fucked you get\n" +
+                    "Sorrow is there when you come back down\n" +
+                    "Funny thing is, all I ever wanted I already had\n" +
+                    "There's glimpses of heaven in every day\n" +
+                    "In the friends I have, the music I make, with the love I feel\n" +
+                    "I just had to start again\"\n" +
+                    "\n" +
+                    "[Verse 1]\n" +
+                    "The days are a deathwish\n" +
+                    "A witch-hunt for an exit\n" +
+                    "I am powerless\n" +
+                    "The fragile, the broken\n" +
+                    "Sit in circles and stay unspoken\n" +
+                    "We are powerless\n" +
+                    "Because we all walk alone on an empty staircase\n" +
+                    "Silent halls and nameless faces\n" +
+                    "I am powerless\n" +
+                    "\n" +
+                    "[Pre-Chorus]\n" +
+                    "Everybody wants to go to Heaven, but nobody wants to die\n" +
+                    "I can't fear death, no longer, I've died a thousand times\n" +
+                    "Why explore the universe when we don't know ourselves?\n" +
+                    "There's an emptiness inside our heads that no one dares to dwell\n" +
+                    "See rock shows near Brooklyn\n" +
+                    "Get tickets as low as $58\n" +
+                    "You might also like\n" +
+                    "loml\n" +
+                    "Taylor Swift\n" +
+                    "So Long, London\n" +
+                    "Taylor Swift\n" +
+                    "Guilty as Sin?\n" +
+                    "Taylor Swift\n" +
+                    "[Chorus]\n" +
+                    "Throw me to the flames\n" +
+                    "Watch me burn\n" +
+                    "Set my world ablaze\n" +
+                    "Watch me burn\n" +
+                    "\n" +
+                    "[Verse 2]\n" +
+                    "How are we on a scale of one to ten?\n" +
+                    "Could you tell me what you see?\n" +
+                    "Do you wanna talk about it?\n" +
+                    "How does that make you feel?\n" +
+                    "Have you ever took a blade to your wrists?\n" +
+                    "Have you been skipping meals?\n" +
+                    "We're gonna try something new today\n" +
+                    "How does that make you feel?\n" +
+                    "\n" +
+                    "[Bridge]\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "In this hospital for souls\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "In this hospital for souls\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "Hold me close, don't let go, watch me (Burn)\n" +
+                    "In this hospital for souls\n" +
+                    "[Outro]\n" +
+                    "Hold me close, don't let go, watch me burn\n" +
+                    "Hold me close, don't let go, watch me burn\n" +
+                    "Hold me close, don't let go, watch me burn\n" +
+                    "In this hospital for souls\n" +
+                    "Hold me close, don't let go, watch me burn\n" +
+                    "Hold me close, don't let go, watch me burn\n" +
+                    "Hold me close, don't let go, watch me burn\n" +
+                    "In this hospital for souls";
+
+
             String result = askModel(modelName, userPrompt);
             System.out.println("Model said: " + result);
             //System.out.println();

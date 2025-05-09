@@ -1,9 +1,10 @@
 package me.redstoner2019.events;
 
+import me.redstoner2019.utils.PreviewType;
 import me.redstoner2019.utils.Setting;
+import me.redstoner2019.utils.SettingType;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
@@ -23,7 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static me.redstoner2019.utils.Setting.*;
-import static me.redstoner2019.events.SettingType.*;
+import static me.redstoner2019.utils.SettingType.*;
 
 public class SettingsSlashCommand extends ListenerAdapter {
 
@@ -54,9 +55,6 @@ public class SettingsSlashCommand extends ListenerAdapter {
 
         previewType.put(USER_BLOCKLIST_ADD,PreviewType.USER_LIST);
         previewType.put(USER_BLOCKLIST_REMOVE,PreviewType.USER_LIST);
-
-        previewType.put(CHANNELS_DISABLED_ADD,PreviewType.USER_LIST);
-        previewType.put(CHANNELS_DISABLED_REMOVE,PreviewType.USER_LIST);
     }
 
     @Override
@@ -171,6 +169,43 @@ public class SettingsSlashCommand extends ListenerAdapter {
                     event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue();
                     return;
                 }
+                case NSFW_CHANNELS_ADD -> {
+                    JSONObject nsfwChannelsList = new JSONObject(getSettingValue(NSFW_CHANNELS_LIST,guildId));
+                    MessageChannelUnion channel = event.getChannel();
+                    if(nsfwChannelsList.has(channel.getId())){
+                        event.reply("NSFW is already enabled in this channel.").setEphemeral(true).queue();
+                    } else {
+                        nsfwChannelsList.put(channel.getId(),true);
+                        event.reply("NSFW is now enabled in this channel.").setEphemeral(true).queue();
+                    }
+                    setSettingValue(NSFW_CHANNELS_LIST,guildId,nsfwChannelsList.toString());
+                    return;
+                }
+                case NSFW_CHANNELS_REMOVE -> {
+                    JSONObject nsfwChannelsList = new JSONObject(getSettingValue(NSFW_CHANNELS_LIST,guildId));
+                    MessageChannelUnion channel = event.getChannel();
+                    if(nsfwChannelsList.has(channel.getId())){
+                        nsfwChannelsList.remove(channel.getId());
+                        setSettingValue(NSFW_CHANNELS_LIST,guildId,nsfwChannelsList.toString());
+                        event.reply("NSFW is now no longer enabled in this channel.").setEphemeral(true).queue();
+                    } else {
+                        event.reply("NSFW is already disabled in this channel.").setEphemeral(true).queue();
+                    }
+                    return;
+                }
+                case NSFW_CHANNELS_LIST -> {
+                    JSONObject disabledList = new JSONObject(getSettingValue(NSFW_CHANNELS_LIST,guildId));
+                    EmbedBuilder embedBuilder = new EmbedBuilder();
+                    embedBuilder.setTitle("Channels NSFW enabled List (" + disabledList.length() + ")");
+                    embedBuilder.setDescription("Channels where NSFW is enabled.");
+                    embedBuilder.setColor(0x00ff00);
+                    for(String id : disabledList.keySet()){
+                        GuildChannel channel = event.getGuild().getGuildChannelById(id);
+                        embedBuilder.addField(channel.getJumpUrl(),"Disabled",true);
+                    }
+                    event.replyEmbeds(embedBuilder.build()).setEphemeral(true).queue();
+                    return;
+                }
             }
 
             if(event.getOptions().size() == 1) event.reply(event.getOption("key").getAsString() +": " + getSettingValue(Setting.valueOf(event.getOption("key").getAsString()),event.getGuild().getId())).setEphemeral(true).queue();
@@ -268,12 +303,4 @@ public class SettingsSlashCommand extends ListenerAdapter {
             throw new RuntimeException(e);
         }
     }
-}
-
-enum SettingType{
-    NORMAL, NO_ARG, THIS_CHANNEL_OPTION
-}
-
-enum PreviewType{
-    STRING_LIST, USER_LIST
 }
